@@ -1,0 +1,91 @@
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 px-4">
+  <div class="w-full max-w-2xl rounded-lg bg-white shadow-xl">
+    <div class="flex items-center justify-between border-b px-6 py-4">
+      <h2 class="text-lg font-semibold text-gray-900">{{ isEdit ? 'Edit Lead' : 'Add Lead' }}</h2>
+      <button type="button" (click)="onCancel()" class="text-gray-500 hover:text-gray-700">Close</button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="space-y-4 px-6 py-4">
+      <div class="grid gap-4 md:grid-cols-2">
+        <div>
+          <label for="name" class="block text-sm font-medium text-gray-700">Name *</label>
+          <input id="name" type="text" formControlName="name" class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+          @if (form.controls.name.touched && form.controls.name.invalid) {
+            <p class="mt-1 text-sm text-red-600">Name is required (min 2 characters).</p>
+          }
+        </div>
+
+        <div>
+          <label for="phoneNumber" class="block text-sm font-medium text-gray-700">Phone Number *</label>
+          <input id="phoneNumber" type="text" formControlName="phoneNumber" class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+          @if (form.controls.phoneNumber.touched && form.controls.phoneNumber.invalid) {
+            <p class="mt-1 text-sm text-red-600">Phone number is required.</p>
+          }
+        </div>
+
+        <div>
+          <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+          <input id="email" type="email" formControlName="email" class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+          @if (form.controls.email.touched && form.controls.email.errors?.['email']) {
+            <p class="mt-1 text-sm text-red-600">Enter a valid email address.</p>
+          }
+        </div>
+
+        <div>
+          <label for="source" class="block text-sm font-medium text-gray-700">Source</label>
+          <select id="source" formControlName="source" class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
+            <option value="WEBSITE">Website</option>
+            <option value="PHONE">Phone</option>
+            <option value="WHATSAPP">WhatsApp</option>
+            <option value="REFERRAL">Referral</option>
+            <option value="SOCIAL_MEDIA">Social Media</option>
+            <option value="OTHER">Other</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+          <select id="status" formControlName="status" class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
+            <option value="NEW">New</option>
+            <option value="CONTACTED">Contacted</option>
+            <option value="QUALIFIED">Qualified</option>
+            <option value="PROPOSAL_SENT">Proposal Sent</option>
+            <option value="WON">Won</option>
+            <option value="LOST">Lost</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="assignedTo" class="block text-sm font-medium text-gray-700">Assigned To</label>
+          <select id="assignedTo" formControlName="assignedTo" class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
+            <option value="">-</option>
+            @for (u of users(); track u.id) {
+              <option [value]="u.id">{{ u.name }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="md:col-span-2">
+          <label for="nextFollowUpAt" class="block text-sm font-medium text-gray-700">Next Follow-up</label>
+          <input id="nextFollowUpAt" type="datetime-local" formControlName="nextFollowUpAt" class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+        </div>
+
+        <div class="md:col-span-2">
+          <label for="notes" class="block text-sm font-medium text-gray-700">Notes</label>
+          <textarea id="notes" formControlName="notes" rows="3" class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"></textarea>
+        </div>
+      </div>
+
+      @if (formError()) {
+        <div class="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{{ formError() }}</div>
+      }
+
+      <div class="flex items-center justify-end gap-2">
+        <button type="button" (click)="onCancel()" class="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">Cancel</button>
+        <button type="submit" [disabled]="form.invalid || submitting()" class="rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300">
+          {{ submitting() ? 'Saving...' : (isEdit ? 'Update Lead' : 'Save Lead') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

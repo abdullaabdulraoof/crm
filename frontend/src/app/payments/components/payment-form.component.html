@@ -1,0 +1,136 @@
+<div class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-gray-900/50 px-4 py-8">
+  <div class="w-full max-w-xl rounded-lg bg-white shadow-xl">
+    <div class="flex items-center justify-between border-b px-6 py-4">
+      <h2 class="text-lg font-semibold text-gray-900">Record Payment</h2>
+      <button type="button" (click)="onCancel()" class="text-gray-500 hover:text-gray-700">Close</button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4 px-6 py-4">
+      @if (formError()) {
+        <div class="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
+          {{ formError() }}
+        </div>
+      }
+
+      <div>
+        <label for="paymentInvoice" class="block text-xs font-medium text-gray-500">Invoice</label>
+        <select
+          id="paymentInvoice"
+          formControlName="invoiceId"
+          (change)="onInvoiceChange()"
+          class="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        >
+          <option value="">{{ loadingInvoices() ? 'Loading invoices...' : 'Select an invoice' }}</option>
+          @for (inv of eligibleInvoices(); track inv.id) {
+            <option [value]="inv.id">{{ invoiceLabel(inv) }}</option>
+          }
+        </select>
+        @if (!loadingInvoices() && eligibleInvoices().length === 0) {
+          <p class="mt-1 text-xs text-gray-500">No issued or partially paid invoices are available.</p>
+        }
+      </div>
+
+      @if (selectedInvoice(); as inv) {
+        <div class="grid gap-3 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm sm:grid-cols-2">
+          <div>
+            <span class="block text-xs font-medium text-gray-500">Client</span>
+            <span class="text-gray-900">{{ inv.client?.name || '-' }}</span>
+          </div>
+          <div>
+            <span class="block text-xs font-medium text-gray-500">Invoice #</span>
+            <span class="text-gray-900">{{ inv.invoiceNumber }}</span>
+          </div>
+          <div>
+            <span class="block text-xs font-medium text-gray-500">Total Amount</span>
+            <span class="text-gray-900">{{ displayAmount(inv.totalAmount) }}</span>
+          </div>
+          <div>
+            <span class="block text-xs font-medium text-gray-500">Amount Paid</span>
+            <span class="text-gray-900">{{ displayAmount(inv.amountPaid) }}</span>
+          </div>
+          <div>
+            <span class="block text-xs font-medium text-gray-500">Balance Due</span>
+            <span class="font-semibold text-gray-900">{{ displayAmount(inv.balanceDue) }}</span>
+          </div>
+        </div>
+      }
+
+      <div class="grid gap-3 sm:grid-cols-2">
+        <div>
+          <label for="paymentAmount" class="block text-xs font-medium text-gray-500">Payment Amount</label>
+          <input
+            id="paymentAmount"
+            type="number"
+            min="0.01"
+            step="0.01"
+            formControlName="amount"
+            class="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          />
+          @if (form.controls.amount.invalid && form.controls.amount.touched) {
+            <p class="mt-1 text-xs text-red-600">Enter an amount greater than 0.</p>
+          }
+        </div>
+
+        <div>
+          <label for="paymentDate" class="block text-xs font-medium text-gray-500">Payment Date</label>
+          <input
+            id="paymentDate"
+            type="date"
+            formControlName="paymentDate"
+            class="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          />
+        </div>
+
+        <div>
+          <label for="paymentMethod" class="block text-xs font-medium text-gray-500">Payment Method</label>
+          <select
+            id="paymentMethod"
+            formControlName="method"
+            class="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          >
+            @for (m of methods; track m) {
+              <option [value]="m">{{ methodLabels[m] }}</option>
+            }
+          </select>
+        </div>
+
+        <div>
+          <label for="paymentReference" class="block text-xs font-medium text-gray-500">Transaction Reference</label>
+          <input
+            id="paymentReference"
+            type="text"
+            formControlName="transactionReference"
+            class="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label for="paymentNotes" class="block text-xs font-medium text-gray-500">Notes</label>
+        <textarea
+          id="paymentNotes"
+          rows="2"
+          formControlName="notes"
+          class="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        ></textarea>
+      </div>
+
+      <div class="flex justify-end gap-2 border-t pt-4">
+        <button
+          type="button"
+          (click)="onCancel()"
+          class="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          [disabled]="submitting()"
+          class="rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {{ submitting() ? 'Recording...' : 'Record Payment' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

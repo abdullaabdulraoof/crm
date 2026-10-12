@@ -1,0 +1,83 @@
+<div class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-gray-900/50 px-4 py-8">
+  <div class="w-full max-w-3xl rounded-lg bg-white shadow-xl">
+    <div class="flex items-center justify-between border-b px-6 py-4">
+      <h2 class="text-lg font-semibold text-gray-900">
+        Quotation {{ quotation?.quotationNumber }}
+      </h2>
+      <button type="button" (click)="onClose()" class="text-gray-500 hover:text-gray-700">Close</button>
+    </div>
+
+    @if (quotation) {
+      <div class="space-y-4 px-6 py-4">
+        <div class="grid gap-3 text-sm sm:grid-cols-2">
+          <div>
+            <span class="block text-xs font-medium text-gray-500">Created For</span>
+            <span class="text-gray-900">{{ customerName() }}</span>
+            @if (customerLabel()) {
+              <span class="ml-1 inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{{ customerLabel() }}</span>
+            }
+          </div>
+          <div>
+            <span class="block text-xs font-medium text-gray-500">Status</span>
+            <span class="text-gray-900">{{ quotation.status }}</span>
+          </div>
+          <div>
+            <span class="block text-xs font-medium text-gray-500">Created</span>
+            <span class="text-gray-900">{{ displayDate(quotation.createdAt) }}</span>
+          </div>
+          <div>
+            <span class="block text-xs font-medium text-gray-500">Valid Until</span>
+            <span class="text-gray-900">{{ displayDate(quotation.validUntil) }}</span>
+          </div>
+          <div>
+            <span class="block text-xs font-medium text-gray-500">Created By</span>
+            <span class="text-gray-900">{{ quotation.createdBy?.name || '-' }}</span>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto rounded-md border border-gray-200">
+          <table class="min-w-full divide-y divide-gray-200 text-sm">
+            <thead class="bg-gray-50">
+              <tr>
+                <th scope="col" class="px-3 py-2 text-left font-medium text-gray-700">Description</th>
+                <th scope="col" class="px-3 py-2 text-right font-medium text-gray-700">Qty</th>
+                <th scope="col" class="px-3 py-2 text-right font-medium text-gray-700">Unit Price</th>
+                <th scope="col" class="px-3 py-2 text-right font-medium text-gray-700">GST %</th>
+                <th scope="col" class="px-3 py-2 text-right font-medium text-gray-700">Amount</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 bg-white">
+              @for (item of quotation.items; track item.id) {
+                <tr>
+                  <td class="px-3 py-2 text-gray-900">{{ item.description }}</td>
+                  <td class="px-3 py-2 text-right text-gray-700">{{ item.quantity }}</td>
+                  <td class="px-3 py-2 text-right text-gray-700">{{ displayAmount(item.unitPrice) }}</td>
+                  <td class="px-3 py-2 text-right text-gray-700">{{ item.gstRate }}</td>
+                  <td class="px-3 py-2 text-right text-gray-700">{{ displayAmount(item.amount) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="ml-auto w-full max-w-xs space-y-1 text-sm text-gray-700">
+          <div class="flex justify-between"><span>Subtotal</span><span>{{ displayAmount(quotation.subtotal) }}</span></div>
+          <div class="flex justify-between"><span>Discount</span><span>{{ displayAmount(quotation.discountAmount) }}</span></div>
+          <div class="flex justify-between"><span>GST</span><span>{{ displayAmount(quotation.taxAmount) }}</span></div>
+          <div class="flex justify-between border-t pt-1 font-semibold"><span>Total</span><span>{{ displayAmount(quotation.totalAmount) }}</span></div>
+        </div>
+
+        @if (quotation.notes) {
+          <div>
+            <span class="block text-xs font-medium text-gray-500">Notes</span>
+            <p class="whitespace-pre-line text-sm text-gray-800">{{ quotation.notes }}</p>
+          </div>
+        }
+      </div>
+    }
+
+    <div class="flex justify-end border-t px-6 py-4">
+      <button type="button" (click)="onClose()" class="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">Close</button>
+    </div>
+  </div>
+</div>

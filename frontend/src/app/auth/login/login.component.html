@@ -1,0 +1,79 @@
+<main class="flex min-h-dvh items-center justify-center bg-gray-50 px-4">
+  <div class="w-full max-w-sm">
+    <div class="rounded-lg border border-gray-200 bg-white p-8 shadow-sm">
+      <h1 class="text-center text-xl font-semibold text-gray-900">CRM</h1>
+      <p class="mt-1 text-center text-sm text-gray-500">Sign in to your account</p>
+
+      <form class="mt-6 space-y-4" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+        <div>
+          <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            autocomplete="email"
+            placeholder="you@example.com"
+            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          />
+          @if (form.controls.email.touched && form.controls.email.invalid) {
+            <p class="mt-1 text-sm text-red-600">
+              @if (form.controls.email.errors?.['required']) {
+                Email is required.
+              } @else if (form.controls.email.errors?.['email']) {
+                Enter a valid email address.
+              }
+            </p>
+          }
+        </div>
+
+        <div>
+          <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+          <div class="relative mt-1">
+            <input
+              id="password"
+              [type]="passwordInputType"
+              formControlName="password"
+              autocomplete="current-password"
+              placeholder="Enter your password"
+              class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+            <button
+              type="button"
+              (click)="passwordVisible.set(!passwordVisible())"
+              aria-label="Show or hide password"
+              class="absolute inset-y-0 right-0 flex items-center pr-3 text-sm text-gray-500 hover:text-gray-700"
+            >
+              {{ passwordVisible() ? 'Hide' : 'Show' }}
+            </button>
+          </div>
+          @if (form.controls.password.touched && form.controls.password.invalid) {
+            <p class="mt-1 text-sm text-red-600">Password is required.</p>
+          }
+        </div>
+
+        <div class="text-right">
+          <a
+            routerLink="/forgot-password"
+            class="text-sm font-medium text-blue-600 hover:text-blue-700"
+          >
+            Forgot password?
+          </a>
+        </div>
+
+        @if (formError()) {
+          <div class="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
+            {{ formError() }}
+          </div>
+        }
+
+        <button
+          type="submit"
+          [disabled]="form.invalid || submitting()"
+          class="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-blue-300"
+        >
+          {{ submitting() ? 'Signing in\u2026' : 'Login' }}
+        </button>
+      </form>
+    </div>
+  </div>
+</main>
