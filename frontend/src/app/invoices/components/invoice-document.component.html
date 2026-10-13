@@ -1,0 +1,146 @@
+<div class="invoice-document bg-white text-slate-800">
+  <header class="flex items-start justify-between gap-6 border-b border-slate-200 pb-4">
+    <div class="min-w-0">
+      @if (hasCompany()) {
+        <p class="text-lg font-semibold text-slate-900">{{ companyName }}</p>
+        @if (invoice?.company?.address) {
+          <p class="mt-1 whitespace-pre-line text-sm text-slate-600">
+            {{ invoice?.company?.address }}
+          </p>
+        }
+        <div class="mt-1 space-y-0.5 text-sm text-slate-600">
+          @if (invoice?.company?.phone) {
+            <p>Phone: {{ invoice?.company?.phone }}</p>
+          }
+          @if (invoice?.company?.email) {
+            <p>Email: {{ invoice?.company?.email }}</p>
+          }
+          @if (invoice?.company?.gstNumber) {
+            <p>GST: {{ invoice?.company?.gstNumber }}</p>
+          }
+        </div>
+      }
+    </div>
+    <div class="shrink-0 text-right">
+      <p class="text-2xl font-bold uppercase tracking-wide text-slate-900">Invoice</p>
+      <p class="mt-1 text-sm font-medium text-slate-700">{{ invoice?.invoiceNumber }}</p>
+      @if (invoice?.effectiveStatus) {
+        <p class="mt-1 text-sm text-slate-500">Status: {{ invoice?.effectiveStatus }}</p>
+      }
+    </div>
+  </header>
+
+  <section class="grid grid-cols-2 gap-6 py-5">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Bill To</p>
+      <p class="mt-1 text-sm font-semibold text-slate-900">{{ clientName() || '-' }}</p>
+      <div class="mt-1 space-y-0.5 text-sm text-slate-600">
+        @if (invoice?.client?.address) {
+          <p class="whitespace-pre-line">{{ invoice?.client?.address }}</p>
+        }
+        @if (invoice?.client?.phoneNumber) {
+          <p>Phone: {{ invoice?.client?.phoneNumber }}</p>
+        }
+        @if (invoice?.client?.email) {
+          <p>Email: {{ invoice?.client?.email }}</p>
+        }
+        @if (invoice?.client?.gstNo) {
+          <p>GST: {{ invoice?.client?.gstNo }}</p>
+        }
+      </div>
+    </div>
+    <div class="text-right">
+      <dl class="ml-auto inline-block text-left text-sm">
+        <div class="flex justify-between gap-6">
+          <dt class="text-slate-500">Issue Date</dt>
+          <dd class="font-medium text-slate-800">{{ date(invoice?.issueDate ?? null) }}</dd>
+        </div>
+        <div class="mt-1 flex justify-between gap-6">
+          <dt class="text-slate-500">Due Date</dt>
+          <dd class="font-medium text-slate-800">{{ date(invoice?.dueDate ?? null) }}</dd>
+        </div>
+        @if (invoice?.quotation?.quotationNumber) {
+          <div class="mt-1 flex justify-between gap-6">
+            <dt class="text-slate-500">Quotation</dt>
+            <dd class="font-medium text-slate-800">{{ invoice?.quotation?.quotationNumber }}</dd>
+          </div>
+        }
+        <div class="mt-1 flex justify-between gap-6">
+          <dt class="text-slate-500">Status</dt>
+          <dd class="font-medium text-slate-800">{{ invoice?.effectiveStatus || '-' }}</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <table class="mt-4 w-full border-collapse text-sm">
+    <thead>
+      <tr class="bg-slate-100 text-left text-slate-700">
+        <th class="border border-slate-200 px-3 py-2 font-semibold">Description</th>
+        <th class="w-16 border border-slate-200 px-3 py-2 text-right font-medium">Qty</th>
+        <th class="w-24 px-3 py-2 text-right font-medium border border-slate-200">Unit Price</th>
+        <th class="w-16 px-3 py-2 text-right font-medium border border-slate-200">GST %</th>
+        <th class="px-3 py-2 text-right font-medium text-slate-700 border border-slate-200">Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (item of invoice?.items || []; track item.id) {
+        <tr class="break-inside-avoid">
+          <td class="whitespace-pre-line px-3 py-2 align-top text-slate-800">{{ item.description }}</td>
+          <td class="px-3 py-2 text-right align-top text-slate-700">{{ quantity(item.quantity) }}</td>
+          <td class="px-3 py-2 text-right align-top text-slate-700">{{ amount(item.unitPrice) }}</td>
+          <td class="px-3 py-2 text-right align-top text-slate-700">{{ item.gstRate }}</td>
+          <td class="px-3 py-2 text-right align-top text-slate-700">{{ amount(item.amount) }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+
+  <div class="mt-6 flex justify-end">
+    <dl class="w-full max-w-xs space-y-1 text-sm">
+      <div class="flex justify-between">
+        <dt class="text-slate-500">Subtotal</dt>
+        <dd class="text-slate-800">{{ amount(invoice?.subtotal) }}</dd>
+      </div>
+      @if (hasDiscount()) {
+        <div class="flex justify-between">
+          <dt class="text-slate-500">Discount</dt>
+          <dd class="text-slate-800">-{{ amount(invoice?.discountAmount) }}</dd>
+        </div>
+      }
+      <div class="flex justify-between">
+        <dt class="text-slate-500">GST</dt>
+        <dd class="text-slate-800">{{ amount(invoice?.taxAmount) }}</dd>
+      </div>
+      <div class="flex justify-between border-t border-slate-300 pt-1 font-semibold">
+        <dt>Total</dt>
+        <dd>{{ amount(invoice?.totalAmount) }}</dd>
+      </div>
+      <div class="flex justify-between text-slate-600">
+        <dt>Amount Paid</dt>
+        <dd>{{ amount(invoice?.amountPaid) }}</dd>
+      </div>
+      <div class="flex justify-between border-t border-slate-300 pt-1 font-semibold">
+        <dt>Balance Due</dt>
+        <dd>{{ amount(invoice?.balanceDue) }}</dd>
+      </div>
+    </dl>
+  </div>
+
+  @if (invoice?.paymentTerms || invoice?.notes) {
+    <div class="mt-6 space-y-3 border-t border-slate-200 pt-4 text-sm">
+      @if (invoice?.paymentTerms) {
+        <div>
+          <p class="font-medium text-slate-700">Payment Terms</p>
+          <p class="whitespace-pre-line text-slate-600">{{ invoice?.paymentTerms }}</p>
+        </div>
+      }
+      @if (invoice?.notes) {
+        <div>
+          <p class="font-medium text-slate-700">Notes</p>
+          <p class="whitespace-pre-line text-slate-600">{{ invoice?.notes }}</p>
+        </div>
+      }
+    </div>
+  }
+</div>

@@ -17,6 +17,7 @@ const LEAD = {
   assignedTo: { id: 'u2', name: 'Sam', email: 'sam@x.com' },
   nextFollowUpAt: null,
   notes: null,
+  clientId: null,
   convertedClientId: null,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
@@ -39,6 +40,7 @@ const FORM_DATA: LeadFormData = {
   assignedTo: 'u2',
   nextFollowUpAt: null,
   notes: null,
+  clientId: null,
 };
 
 describe('LeadsService', () => {

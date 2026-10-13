@@ -17,18 +17,22 @@ import { LeadsService } from '../services/leads.service';
 import { Lead, LeadFormData, LeadSource, LeadStatus } from '../leads.types';
 import { UsersService } from '../../users/users.service';
 import { AssignedUserOption } from '../../users/users.types';
+import { ClientsService } from '../../clients/clients.service';
+import { Client, ClientOption } from '../../clients/clients.types';
+import { ClientFormComponent } from '../../clients/components/client-form.component';
 import { IconComponent } from '../../layout/icon/icon.component';
 
 @Component({
   selector: 'app-lead-form',
   standalone: true,
-  imports: [ReactiveFormsModule, IconComponent],
+  imports: [ReactiveFormsModule, IconComponent, ClientFormComponent],
   templateUrl: './lead-form.component.html',
 })
 export class LeadFormComponent implements OnInit, OnChanges {
   private readonly fb = inject(FormBuilder);
   private readonly leadsService = inject(LeadsService);
   private readonly usersService = inject(UsersService);
+  private readonly clientsService = inject(ClientsService);
 
   @Input() lead: Lead | null = null;
   @Input() isOpen = false;
@@ -36,6 +40,11 @@ export class LeadFormComponent implements OnInit, OnChanges {
   @Output() cancelled = new EventEmitter<void>();
 
   readonly users = signal<AssignedUserOption[]>([]);
+  readonly clients = signal<ClientOption[]>([]);
+  readonly clientsLoading = signal(false);
+  readonly clientsError = signal<string | null>(null);
+  readonly showClientForm = signal(false);
+  readonly selectedClientId = signal<string>('');
   readonly submitting = signal(false);
   readonly formError = signal<string | null>(null);
 
@@ -46,6 +55,7 @@ export class LeadFormComponent implements OnInit, OnChanges {
     source: ['OTHER' as LeadSource],
     status: ['NEW' as LeadStatus],
     assignedTo: ['' as string | null],
+    clientId: ['' as string],
     nextFollowUpAt: [null as string | null],
     notes: [null as string | null],
   });
@@ -54,8 +64,20 @@ export class LeadFormComponent implements OnInit, OnChanges {
     return !!this.lead;
   }
 
+  // Name/Phone/Email are derived from the linked client. In Add mode they only
+  // appear once a client is selected; in Edit mode they stay visible so legacy
+  // leads (no client) remain editable.
+  get showContactFields(): boolean {
+    return this.isEdit || !!this.selectedClientId();
+  }
+
+  get contactReadOnly(): boolean {
+    return !!this.selectedClientId();
+  }
+
   ngOnInit(): void {
     this.loadUsers();
+    this.loadClients();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -71,6 +93,22 @@ export class LeadFormComponent implements OnInit, OnChanges {
     });
   }
 
+  private loadClients(): void {
+    this.clientsLoading.set(true);
+    this.clientsError.set(null);
+    this.clientsService.getClients().subscribe({
+      next: (list) => {
+        this.clients.set(list);
+        this.clientsLoading.set(false);
+      },
+      error: () => {
+        this.clients.set([]);
+        this.clientsLoading.set(false);
+        this.clientsError.set('Failed to load clients');
+      },
+    });
+  }
+
   private populate(): void {
     this.formError.set(null);
     if (this.lead) {
@@ -81,9 +119,11 @@ export class LeadFormComponent implements OnInit, OnChanges {
         source: (this.lead.source as LeadSource) || 'OTHER',
         status: (this.lead.status as LeadStatus) || 'NEW',
         assignedTo: this.lead.assignedTo?.id || null,
+        clientId: this.lead.clientId || '',
         nextFollowUpAt: this.toDatetimeLocal(this.lead.nextFollowUpAt),
         notes: this.lead.notes || null,
       });
+      this.selectedClientId.set(this.lead.clientId || '');
     } else {
       this.form.reset({
         name: '',
@@ -92,9 +132,11 @@ export class LeadFormComponent implements OnInit, OnChanges {
         source: 'OTHER',
         status: 'NEW',
         assignedTo: null,
+        clientId: '',
         nextFollowUpAt: null,
         notes: null,
       });
+      this.selectedClientId.set('');
     }
   }
 
@@ -124,6 +166,7 @@ export class LeadFormComponent implements OnInit, OnChanges {
       assignedTo: raw.assignedTo ? raw.assignedTo : null,
       nextFollowUpAt: raw.nextFollowUpAt || null,
       notes: raw.notes && raw.notes.trim() !== '' ? raw.notes.trim() : null,
+      clientId: raw.clientId ? raw.clientId : null,
     };
     const obs = this.isEdit && this.lead
       ? this.leadsService.updateLead(this.lead.id, data)
@@ -146,8 +189,62 @@ export class LeadFormComponent implements OnInit, OnChanges {
     return !!control && control.invalid && (control.touched || control.dirty);
   }
 
+  onClientChange(value: string): void {
+    if (!value) {
+      this.selectedClientId.set('');
+      // Add mode: the contact fields were derived from the client, so clear
+      // them so no stale values are submitted once the selection is cleared.
+      if (!this.isEdit) {
+        this.form.patchValue({ name: '', phoneNumber: '', email: '' });
+      }
+      return;
+    }
+    const client = this.clients().find((c) => c.id === value);
+    if (!client) return;
+    this.selectedClientId.set(value);
+    this.applyClient(client);
+  }
+
+  onClientSaved(client: Client): void {
+    this.clients.update((list) => {
+      const exists = list.some((c) => c.id === client.id);
+      const option: ClientOption = {
+        id: client.id,
+        name: client.name,
+        phoneNumber: client.phoneNumber,
+        email: client.email || '',
+      };
+      return exists ? list.map((c) => (c.id === client.id ? option : c)) : [...list, option];
+    });
+    this.selectedClientId.set(client.id);
+    this.form.patchValue({ clientId: client.id });
+    this.applyClient(client);
+  }
+
+  openClientForm(): void {
+    this.showClientForm.set(true);
+  }
+
+  closeClientForm(): void {
+    this.showClientForm.set(false);
+  }
+
+  clientLabel(client: ClientOption): string {
+    return client.phoneNumber ? `${client.name} — ${client.phoneNumber}` : client.name;
+  }
+
+  // A lead that represents a client derives its identity fields from it.
+  private applyClient(client: ClientOption | Client): void {
+    this.form.patchValue({
+      name: client.name,
+      phoneNumber: client.phoneNumber || '',
+      email: client.email || '',
+    });
+  }
+
   @HostListener('document:keydown.escape')
   onEscape(): void {
+    if (this.showClientForm()) return;
     if (!this.submitting()) {
       this.onCancel();
     }

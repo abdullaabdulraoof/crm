@@ -71,6 +71,15 @@ const leadSchema = new mongoose.Schema(
       default: null,
     },
 
+    // Optional association with an existing client (same company, active).
+    // Distinct from convertedClientId, which records the client a lead was
+    // converted INTO and is consumed by invoicing.
+    clientId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Client",
+      default: null,
+    },
+
     convertedClientId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Client",

@@ -15,6 +15,7 @@ const LEAD: Lead = {
   assignedTo: { id: 'u2', name: 'Sam', email: 'sam@x.com' },
   nextFollowUpAt: '2026-02-01T10:00:00.000Z',
   notes: 'Interested in the pro plan',
+  clientId: null,
   convertedClientId: null,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-02T00:00:00.000Z',

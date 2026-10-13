@@ -37,13 +37,19 @@ const assertDeleteLead = (actor) => {
 };
 
 // Optional reference that must resolve to a record inside the actor's company.
-const sameCompanyRef = async (Model, actor, value, field, label) => {
+// When requireActive is set, the referenced record must also be active (used for
+// linking a lead to a client so archived clients can never be selected).
+const sameCompanyRef = async (Model, actor, value, field, label, { requireActive = false } = {}) => {
   const id = parseId(value, field);
-  const record = await Model.findOne({ _id: id, companyId: actor.companyId }).select("_id");
+  const filter = { _id: id, companyId: actor.companyId };
+  if (requireActive) filter.isActive = true;
+
+  const record = await Model.findOne(filter).select("_id");
   if (!record) {
-    throw AppError.badRequest(`Invalid ${field}`, [
-      { field, message: `${field} must be a ${label} of this company` },
-    ]);
+    const message = requireActive
+      ? `${field} must be an active ${label} of this company`
+      : `${field} must be a ${label} of this company`;
+    throw AppError.badRequest(`Invalid ${field}`, [{ field, message }]);
   }
   return id;
 };
@@ -100,6 +106,11 @@ const createLead = async (actor, input, { ipAddress } = {}) => {
 
   if (email) doc.email = email;
   if (input.notes !== undefined) doc.notes = normalizeString(input.notes);
+  if (input.clientId !== undefined && input.clientId !== null && input.clientId !== "") {
+    doc.clientId = await sameCompanyRef(Client, actor, input.clientId, "clientId", "client", {
+      requireActive: true,
+    });
+  }
   if (input.assignedTo !== undefined && input.assignedTo !== null && input.assignedTo !== "") {
     doc.assignedTo = await sameCompanyRef(User, actor, input.assignedTo, "assignedTo", "user");
   }
@@ -263,6 +274,15 @@ const updateLead = async (actor, id, input, { ipAddress } = {}) => {
         ? null
         : await sameCompanyRef(User, actor, input.assignedTo, "assignedTo", "user");
     changed.push("assignedTo");
+  }
+  if (input.clientId !== undefined) {
+    lead.clientId =
+      input.clientId === null || input.clientId === ""
+        ? null
+        : await sameCompanyRef(Client, actor, input.clientId, "clientId", "client", {
+            requireActive: true,
+          });
+    changed.push("clientId");
   }
   if (input.nextFollowUpAt !== undefined) {
     lead.nextFollowUpAt = parseOptionalDate(input.nextFollowUpAt, "nextFollowUpAt") || null;

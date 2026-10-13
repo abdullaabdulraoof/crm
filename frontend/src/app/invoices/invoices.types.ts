@@ -39,6 +39,17 @@ export interface InvoiceClientRef {
   name: string;
   phoneNumber: string;
   email: string;
+  address?: string;
+  gstNo?: string | null;
+}
+
+export interface InvoiceCompanyRef {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  gstNumber: string;
+  address: string;
 }
 
 export interface InvoiceQuotationRef {
@@ -72,6 +83,7 @@ export interface InvoiceItem {
 export interface Invoice {
   id: string;
   companyId: string;
+  company: InvoiceCompanyRef | null;
   invoiceNumber: string;
   quotationId: string | null;
   quotation: InvoiceQuotationRef | null;

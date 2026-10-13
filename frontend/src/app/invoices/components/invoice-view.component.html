@@ -1,93 +1,50 @@
 <div class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-gray-900/50 px-4 py-8">
   <div class="w-full max-w-3xl rounded-lg bg-white shadow-xl">
-    <div class="flex items-center justify-between border-b px-6 py-4">
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b px-6 py-4">
       <h2 class="text-lg font-semibold text-gray-900">
         Invoice {{ invoice?.invoiceNumber }}
       </h2>
-      <button type="button" (click)="onClose()" class="text-gray-500 hover:text-gray-700">Close</button>
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          (click)="onDownloadPdf()"
+          [disabled]="downloading() || !invoice"
+          class="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 disabled:cursor-not-allowed disabled:opacity-60 motion-reduce:transition-none"
+        >
+          <app-icon name="download" [size]="16" />
+          {{ downloading() ? 'Generating…' : 'Download PDF' }}
+        </button>
+        <button
+          type="button"
+          (click)="onPrint()"
+          [disabled]="!invoice"
+          class="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 disabled:cursor-not-allowed disabled:opacity-60 motion-reduce:transition-none"
+        >
+          <app-icon name="printer" [size]="16" />
+          Print Invoice
+        </button>
+        <button
+          type="button"
+          (click)="onClose()"
+          class="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+        >
+          Close
+        </button>
+      </div>
     </div>
 
-    @if (invoice) {
-      <div class="space-y-4 px-6 py-4">
-        <div class="grid gap-3 text-sm sm:grid-cols-2">
-          <div>
-            <span class="block text-xs font-medium text-gray-500">Client</span>
-            <span class="text-gray-900">{{ customerName() }}</span>
-          </div>
-          <div>
-            <span class="block text-xs font-medium text-gray-500">Status</span>
-            <span class="text-gray-900">{{ invoice.effectiveStatus }}</span>
-          </div>
-          <div>
-            <span class="block text-xs font-medium text-gray-500">Issue Date</span>
-            <span class="text-gray-900">{{ displayDate(invoice.issueDate) }}</span>
-          </div>
-          <div>
-            <span class="block text-xs font-medium text-gray-500">Due Date</span>
-            <span class="text-gray-900">{{ displayDate(invoice.dueDate) }}</span>
-          </div>
-          <div>
-            <span class="block text-xs font-medium text-gray-500">Quotation</span>
-            <span class="text-gray-900">{{ invoice.quotation?.quotationNumber || '-' }}</span>
-          </div>
-          <div>
-            <span class="block text-xs font-medium text-gray-500">Created By</span>
-            <span class="text-gray-900">{{ invoice.createdBy?.name || '-' }}</span>
-          </div>
+    <div class="px-6 py-5">
+      @if (actionError()) {
+        <div class="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {{ actionError() }}
         </div>
+      }
 
-        <div class="overflow-x-auto rounded-md border border-gray-200">
-          <table class="min-w-full divide-y divide-gray-200 text-sm">
-            <thead class="bg-gray-50">
-              <tr>
-                <th scope="col" class="px-3 py-2 text-left font-medium text-gray-700">Description</th>
-                <th scope="col" class="px-3 py-2 text-right font-medium text-gray-700">Qty</th>
-                <th scope="col" class="px-3 py-2 text-right font-medium text-gray-700">Unit Price</th>
-                <th scope="col" class="px-3 py-2 text-right font-medium text-gray-700">GST %</th>
-                <th scope="col" class="px-3 py-2 text-right font-medium text-gray-700">Amount</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100 bg-white">
-              @for (item of invoice.items; track item.id) {
-                <tr>
-                  <td class="px-3 py-2 text-gray-900">{{ item.description }}</td>
-                  <td class="px-3 py-2 text-right text-gray-700">{{ item.quantity }}</td>
-                  <td class="px-3 py-2 text-right text-gray-700">{{ displayAmount(item.unitPrice) }}</td>
-                  <td class="px-3 py-2 text-right text-gray-700">{{ item.gstRate }}</td>
-                  <td class="px-3 py-2 text-right text-gray-700">{{ displayAmount(item.amount) }}</td>
-                </tr>
-              }
-            </tbody>
-          </table>
+      @if (invoice) {
+        <div #invoiceDocRoot class="mx-auto max-w-3xl">
+          <app-invoice-document [invoice]="invoice" />
         </div>
-
-        <div class="ml-auto w-full max-w-xs space-y-1 text-sm text-gray-700">
-          <div class="flex justify-between"><span>Subtotal</span><span>{{ displayAmount(invoice.subtotal) }}</span></div>
-          <div class="flex justify-between"><span>Discount</span><span>{{ displayAmount(invoice.discountAmount) }}</span></div>
-          <div class="flex justify-between"><span>GST</span><span>{{ displayAmount(invoice.taxAmount) }}</span></div>
-          <div class="flex justify-between border-t pt-1 font-semibold"><span>Total</span><span>{{ displayAmount(invoice.totalAmount) }}</span></div>
-          <div class="flex justify-between"><span>Amount Paid</span><span>{{ displayAmount(invoice.amountPaid) }}</span></div>
-          <div class="flex justify-between font-semibold"><span>Balance Due</span><span>{{ displayAmount(invoice.balanceDue) }}</span></div>
-        </div>
-
-        @if (invoice.paymentTerms) {
-          <div>
-            <span class="block text-xs font-medium text-gray-500">Payment Terms</span>
-            <p class="text-sm text-gray-800">{{ invoice.paymentTerms }}</p>
-          </div>
-        }
-
-        @if (invoice.notes) {
-          <div>
-            <span class="block text-xs font-medium text-gray-500">Notes</span>
-            <p class="whitespace-pre-line text-sm text-gray-800">{{ invoice.notes }}</p>
-          </div>
-        }
-      </div>
-    }
-
-    <div class="flex justify-end border-t px-6 py-4">
-      <button type="button" (click)="onClose()" class="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">Close</button>
+      }
     </div>
   </div>
 </div>

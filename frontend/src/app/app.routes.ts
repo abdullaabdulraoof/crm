@@ -7,6 +7,7 @@ import { ResetPassword } from './auth/reset-password/reset-password.component';
 import { Dashboard } from './dashboard/dashboard.component';
 import { LayoutComponent } from './layout/layout.component';
 import { LeadsPageComponent } from './leads/pages/leads-page.component';
+import { ClientsPageComponent } from './clients/pages/clients-page.component';
 import { FollowUpsPageComponent } from './follow-ups/pages/follow-ups-page.component';
 import { ProductsPageComponent } from './products/pages/products-page.component';
 import { QuotationsPageComponent } from './quotations/pages/quotations-page.component';
@@ -26,6 +27,7 @@ export const routes: Routes = [
     children: [
       { path: 'dashboard', component: Dashboard, data: { title: 'Dashboard' } },
       { path: 'leads', component: LeadsPageComponent, data: { title: 'Leads' } },
+      { path: 'clients', component: ClientsPageComponent, data: { title: 'Clients' } },
       { path: 'follow-ups', component: FollowUpsPageComponent, data: { title: 'Follow-ups' } },
       { path: 'products', component: ProductsPageComponent, data: { title: 'Products' } },
       { path: 'quotations', component: QuotationsPageComponent, data: { title: 'Quotations' } },

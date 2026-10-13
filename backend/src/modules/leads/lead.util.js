@@ -39,6 +39,7 @@ const toLeadView = (lead) => {
     assignedTo: populatedView(doc.assignedTo, ["name", "email"]),
     notes: doc.notes || null,
     nextFollowUpAt: doc.nextFollowUpAt || null,
+    clientId: idOf(doc.clientId),
     convertedClientId: idOf(doc.convertedClientId),
     createdBy: populatedView(doc.createdBy, ["name"]),
     createdAt: doc.createdAt || null,

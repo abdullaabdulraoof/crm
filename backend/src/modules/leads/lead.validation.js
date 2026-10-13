@@ -20,6 +20,13 @@ const createRules = [
     pattern: OBJECT_ID_RE,
     patternMessage: "assignedTo must be a valid user id",
   },
+  {
+    field: "clientId",
+    type: "string",
+    required: false,
+    pattern: OBJECT_ID_RE,
+    patternMessage: "clientId must be a valid client id",
+  },
   { field: "notes", type: "string", required: false, max: 2000 },
 ];
 
@@ -35,6 +42,13 @@ const updateRules = [
     required: false,
     pattern: OBJECT_ID_RE,
     patternMessage: "assignedTo must be a valid user id",
+  },
+  {
+    field: "clientId",
+    type: "string",
+    required: false,
+    pattern: OBJECT_ID_RE,
+    patternMessage: "clientId must be a valid client id",
   },
   { field: "notes", type: "string", required: false, max: 2000 },
 ];

@@ -10,6 +10,7 @@ const {
   createCompanyWithOwner,
   createUser,
   createLead,
+  createClient,
   signToken,
 } = require("../helpers/factories");
 
@@ -209,6 +210,76 @@ describe("POST /api/leads", () => {
     expect(res.status).toBe(400);
     expect(res.body.error.details).toEqual(
       expect.arrayContaining([expect.objectContaining({ field: "nextFollowUpAt" })])
+    );
+  });
+
+  test("links an active same-company client", async () => {
+    const client = await createClient({
+      companyId: companyA._id,
+      createdBy: ownerA._id,
+      name: "Acme Client",
+    });
+
+    const res = await request(app)
+      .post("/api/leads")
+      .set(asUser(tokenSales))
+      .send({ ...VALID_LEAD, clientId: client._id.toString() });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.lead.clientId).toBe(client._id.toString());
+  });
+
+  test("rejects a client from another company", async () => {
+    const otherClient = await createClient({
+      companyId: companyB._id,
+      createdBy: ownerB._id,
+      name: "Other Co",
+    });
+
+    const res = await request(app)
+      .post("/api/leads")
+      .set(asUser(tokenOwner))
+      .send({ ...VALID_LEAD, clientId: otherClient._id.toString() });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.details).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          field: "clientId",
+          message: "clientId must be an active client of this company",
+        }),
+      ])
+    );
+  });
+
+  test("rejects an archived client", async () => {
+    const archived = await createClient({
+      companyId: companyA._id,
+      createdBy: ownerA._id,
+      name: "Archived Co",
+      isActive: false,
+    });
+
+    const res = await request(app)
+      .post("/api/leads")
+      .set(asUser(tokenOwner))
+      .send({ ...VALID_LEAD, clientId: archived._id.toString() });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.details).toEqual(
+      expect.arrayContaining([expect.objectContaining({ field: "clientId" })])
+    );
+  });
+
+  test("rejects a malformed clientId", async () => {
+    const res = await request(app)
+      .post("/api/leads")
+      .set(asUser(tokenOwner))
+      .send({ ...VALID_LEAD, clientId: "not-an-object-id" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.details).toEqual(
+      expect.arrayContaining([expect.objectContaining({ field: "clientId" })])
     );
   });
 });
@@ -434,6 +505,50 @@ describe("PUT /api/leads/:id", () => {
     expect(res.status).toBe(400);
     expect(res.body.error.details).toEqual(
       expect.arrayContaining([expect.objectContaining({ field: "status" })])
+    );
+  });
+
+  test("links and clears clientId on update", async () => {
+    const client = await createClient({
+      companyId: companyA._id,
+      createdBy: ownerA._id,
+      name: "Linked Client",
+    });
+    const lead = await createLead({ companyId: companyA._id, createdBy: ownerA._id });
+
+    const linked = await request(app)
+      .put(`/api/leads/${lead._id}`)
+      .set(asUser(tokenManager))
+      .send({ clientId: client._id.toString() });
+
+    expect(linked.status).toBe(200);
+    expect(linked.body.data.lead.clientId).toBe(client._id.toString());
+
+    const cleared = await request(app)
+      .put(`/api/leads/${lead._id}`)
+      .set(asUser(tokenOwner))
+      .send({ clientId: "" });
+
+    expect(cleared.status).toBe(200);
+    expect(cleared.body.data.lead.clientId).toBeNull();
+  });
+
+  test("cannot link another company's client on update", async () => {
+    const otherClient = await createClient({
+      companyId: companyB._id,
+      createdBy: ownerB._id,
+      name: "Other Co",
+    });
+    const lead = await createLead({ companyId: companyA._id, createdBy: ownerA._id });
+
+    const res = await request(app)
+      .put(`/api/leads/${lead._id}`)
+      .set(asUser(tokenOwner))
+      .send({ clientId: otherClient._id.toString() });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.details).toEqual(
+      expect.arrayContaining([expect.objectContaining({ field: "clientId" })])
     );
   });
 });

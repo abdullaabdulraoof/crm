@@ -41,6 +41,7 @@ describe('AuthService', () => {
 
   afterEach(() => {
     httpMock.verify();
+    localStorage.clear();
     TestBed.resetTestingModule();
   });
 

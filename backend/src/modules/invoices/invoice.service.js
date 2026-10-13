@@ -31,7 +31,8 @@ const TRANSITIONS = {
 };
 
 const LIST_POPULATE = [
-  { path: "clientId", select: "name phoneNumber email" },
+  { path: "clientId", select: "name phoneNumber email address gstNo" },
+  { path: "companyId", select: "name email phone gstNumber address" },
   { path: "quotationId", select: "quotationNumber" },
   { path: "createdBy", select: "name email" },
 ];
@@ -291,14 +292,17 @@ const resolveClientFromQuotation = async (actor, quotation) => {
 
   if (quotation.leadId) {
     const lead = await Lead.findOne({ _id: quotation.leadId, companyId: actor.companyId }).select(
-      "convertedClientId"
+      "convertedClientId clientId"
     );
-    if (lead && lead.convertedClientId) {
-      const converted = await Client.findOne({
-        _id: lead.convertedClientId,
+    // Prefer the client the lead was explicitly converted into, then fall back
+    // to the client the lead is linked to.
+    const candidates = [lead && lead.convertedClientId, lead && lead.clientId].filter(Boolean);
+    for (const candidate of candidates) {
+      const resolved = await Client.findOne({
+        _id: candidate,
         companyId: actor.companyId,
       }).select("_id");
-      if (converted) return converted._id;
+      if (resolved) return resolved._id;
     }
   }
 

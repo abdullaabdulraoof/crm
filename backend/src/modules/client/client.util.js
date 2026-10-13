@@ -14,11 +14,12 @@ const toClientView = (client) => ({
   updatedAt: client.updatedAt,
 });
 
-// Minimal projection for dropdown pickers (unchanged legacy payload).
+// Minimal projection for dropdown pickers.
 const toClientOption = (client) => ({
   id: String(client._id),
   name: client.name,
   phoneNumber: client.phoneNumber || "",
+  email: client.email || "",
 });
 
 module.exports = { toClientView, toClientOption };

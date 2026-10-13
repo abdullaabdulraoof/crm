@@ -19,6 +19,7 @@ const LEAD: Lead = {
   assignedTo: { id: 'u2', name: 'Sam', email: 'sam@x.com' },
   nextFollowUpAt: null,
   notes: null,
+  clientId: null,
   convertedClientId: null,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
@@ -107,8 +108,11 @@ describe('LeadsPageComponent', () => {
     expect(component.showForm()).toBe(true);
     const formEl = fixture.nativeElement.querySelector('app-lead-form');
     expect(formEl).toBeTruthy();
-    // lead-form fetches user options when it initializes
+    // lead-form fetches user and client options when it initializes
     httpMock.expectOne('/api/users/options').flush({ success: true, data: { users: [] } });
+    httpMock
+      .expectOne('/api/clients/options')
+      .flush({ success: true, data: { clients: [] } });
   });
 
   it('opens the lead view from a View action and closes it', async () => {

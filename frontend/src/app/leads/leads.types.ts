@@ -20,6 +20,7 @@ export interface Lead {
   assignedTo: LeadAssignedTo | null;
   nextFollowUpAt: string | null;
   notes: string | null;
+  clientId: string | null;
   convertedClientId: string | null;
   createdAt: string;
   updatedAt: string;
@@ -79,4 +80,5 @@ export interface LeadFormData {
   assignedTo: string | null;
   nextFollowUpAt: string | null;
   notes: string | null;
+  clientId: string | null;
 }

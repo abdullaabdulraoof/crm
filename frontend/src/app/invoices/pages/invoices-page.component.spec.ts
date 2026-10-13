@@ -10,6 +10,14 @@ import { Invoice } from '../invoices.types';
 const INVOICE: Invoice = {
   id: 'i1',
   companyId: 'c1',
+  company: {
+    id: 'c1',
+    name: 'Acme Solutions',
+    email: 'billing@acme.com',
+    phone: '1234567890',
+    gstNumber: 'GSTACME1',
+    address: '1 Acme Way, Springfield',
+  },
   invoiceNumber: 'INV-2026-0001',
   quotationId: null,
   quotation: null,

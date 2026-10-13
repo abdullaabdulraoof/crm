@@ -12,6 +12,22 @@ const clientRef = (value) => {
     name: value.name,
     phoneNumber: value.phoneNumber || "",
     email: value.email || "",
+    address: value.address || "",
+    gstNo: value.gstNo || null,
+  };
+};
+
+// The invoice's owning company. Only ever the actor's own company (the invoice
+// was already scoped by companyId), so no cross-company data is exposed.
+const companyRef = (value) => {
+  if (!value || typeof value !== "object" || !value._id) return null;
+  return {
+    id: String(value._id),
+    name: value.name,
+    email: value.email || "",
+    phone: value.phone || "",
+    gstNumber: value.gstNumber || "",
+    address: value.address || "",
   };
 };
 
@@ -61,7 +77,8 @@ const toInvoiceView = (doc) => {
   const isOverdue = computeOverdue(doc);
   return {
     id: String(doc._id),
-    companyId: String(doc.companyId),
+    companyId: idOf(doc.companyId),
+    company: companyRef(doc.companyId),
     invoiceNumber: doc.invoiceNumber,
     quotationId: idOf(doc.quotationId),
     quotation: quotationRef(doc.quotationId),

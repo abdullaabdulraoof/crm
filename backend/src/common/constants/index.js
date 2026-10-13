@@ -16,6 +16,12 @@ const LEAD_EDIT_ROLES = Object.freeze([ROLES.OWNER, ROLES.ADMIN, ROLES.MANAGER, 
 // Roles allowed to delete leads. SALES and MANAGER never delete.
 const LEAD_DELETE_ROLES = Object.freeze([ROLES.OWNER, ROLES.ADMIN]);
 
+// Roles allowed to create, view and edit clients.
+const CLIENT_EDIT_ROLES = Object.freeze([ROLES.OWNER, ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES]);
+
+// Roles allowed to archive (soft-delete) clients. SALES and MANAGER never archive.
+const CLIENT_DELETE_ROLES = Object.freeze([ROLES.OWNER, ROLES.ADMIN]);
+
 // Roles allowed to create, view and edit follow-ups.
 const FOLLOWUP_EDIT_ROLES = Object.freeze([ROLES.OWNER, ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES]);
 
@@ -67,6 +73,8 @@ module.exports = {
   USER_MANAGEMENT_ROLES,
   LEAD_EDIT_ROLES,
   LEAD_DELETE_ROLES,
+  CLIENT_EDIT_ROLES,
+  CLIENT_DELETE_ROLES,
   FOLLOWUP_EDIT_ROLES,
   FOLLOWUP_DELETE_ROLES,
   PRODUCT_EDIT_ROLES,

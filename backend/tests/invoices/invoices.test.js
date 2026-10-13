@@ -382,6 +382,31 @@ describe("POST /api/invoices (from quotation)", () => {
     expect(res.body.data.invoice.client.id).toBe(String(client._id));
   });
 
+  test("resolves the client from a linked lead when the quotation has none", async () => {
+    const client = await seedClient({ name: "Linked Customer" });
+    const lead = await seedLead({ name: "Linked Lead", clientId: client._id });
+    const quotation = await seedQuotation({ leadId: lead._id, status: "ACCEPTED" });
+
+    const res = await createInvoice(tokenOwner, { quotationId: String(quotation._id) });
+    expect(res.status).toBe(201);
+    expect(res.body.data.invoice.client.id).toBe(String(client._id));
+  });
+
+  test("prefers the converted client over a linked client on the lead", async () => {
+    const converted = await seedClient({ name: "Converted Customer" });
+    const linked = await seedClient({ name: "Linked Customer" });
+    const lead = await seedLead({
+      name: "Both Client Lead",
+      convertedClientId: converted._id,
+      clientId: linked._id,
+    });
+    const quotation = await seedQuotation({ leadId: lead._id, status: "ACCEPTED" });
+
+    const res = await createInvoice(tokenOwner, { quotationId: String(quotation._id) });
+    expect(res.status).toBe(201);
+    expect(res.body.data.invoice.client.id).toBe(String(converted._id));
+  });
+
   test("rejects an accepted quotation with no resolvable client", async () => {
     const lead = await seedLead({ name: "Unconverted" });
     const quotation = await seedQuotation({ leadId: lead._id, status: "ACCEPTED" });
@@ -542,6 +567,31 @@ describe("GET /api/invoices", () => {
 });
 
 describe("GET /api/invoices/:id", () => {
+  test("includes the company and the full client contact snapshot", async () => {
+    const client = await seedClient({
+      name: "Orion Ltd",
+      address: "9 Orbit Way",
+      gstNo: "29AAAAA0000A1Z5",
+    });
+    const created = await createDirect(tokenOwner, { clientId: String(client._id) });
+
+    const res = await request(app)
+      .get(`/api/invoices/${created.body.data.invoice.id}`)
+      .set(asUser(tokenOwner));
+    expect(res.status).toBe(200);
+    const invoice = res.body.data.invoice;
+    expect(invoice.company).toEqual({
+      id: String(companyA._id),
+      name: companyA.name,
+      email: companyA.email,
+      phone: companyA.phone,
+      gstNumber: companyA.gstNumber,
+      address: companyA.address,
+    });
+    expect(invoice.client.address).toBe("9 Orbit Way");
+    expect(invoice.client.gstNo).toBe("29AAAAA0000A1Z5");
+  });
+
   test("returns an invoice with a populated product snapshot", async () => {
     const product = await seedProduct({ name: "Catalog Widget" });
     const client = await seedClient();
