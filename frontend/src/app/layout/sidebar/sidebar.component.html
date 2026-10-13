@@ -1,0 +1,95 @@
+@if (mobileOpen()) {
+  <div
+    class="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm lg:hidden"
+    (click)="closeMobile.emit()"
+    aria-hidden="true"
+  ></div>
+}
+
+<aside
+  id="app-sidebar"
+  class="fixed inset-y-0 left-0 z-50 flex h-dvh flex-col border-r border-slate-200 bg-white transition-transform duration-200 ease-in-out lg:sticky lg:top-0 lg:z-30 lg:translate-x-0 motion-reduce:transition-none"
+  [class.-translate-x-full]="!mobileOpen()"
+  [style.width]="collapsed() ? '4.5rem' : '16rem'"
+  [style.maxWidth]="'85vw'"
+  aria-label="Sidebar"
+>
+  <div class="flex h-16 items-center gap-2 border-b border-slate-100 px-4">
+    <span
+      class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-600 text-sm font-bold text-white"
+      aria-hidden="true"
+    >
+      CRM
+    </span>
+    @if (!collapsed()) {
+      <span class="flex-1 truncate text-base font-semibold text-slate-900">CRM Suite</span>
+      <button
+        type="button"
+        class="hidden rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 lg:inline-flex"
+        (click)="toggleCollapse.emit()"
+        [attr.aria-label]="'Collapse sidebar'"
+        aria-controls="app-sidebar"
+        [attr.aria-expanded]="true"
+      >
+        <app-icon name="collapse" [size]="18" />
+      </button>
+    } @else {
+      <span class="flex-1"></span>
+      <button
+        type="button"
+        class="hidden rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 lg:inline-flex"
+        (click)="toggleCollapse.emit()"
+        aria-label="Expand sidebar"
+        aria-controls="app-sidebar"
+        [attr.aria-expanded]="false"
+      >
+        <app-icon name="expand" [size]="18" />
+      </button>
+    }
+    <button
+      type="button"
+      class="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 lg:hidden"
+      (click)="closeMobile.emit()"
+      aria-label="Close navigation menu"
+    >
+      <app-icon name="close" [size]="20" />
+    </button>
+  </div>
+
+  <nav class="flex-1 space-y-6 overflow-y-auto px-3 py-4" aria-label="Main navigation">
+    @for (group of groups; track group.heading) {
+      <div>
+        @if (!collapsed()) {
+          <p class="px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
+            {{ group.heading }}
+          </p>
+        } @else {
+          <div class="mx-auto mb-2 w-6 border-t border-slate-200" aria-hidden="true"></div>
+        }
+
+        <ul class="space-y-1">
+          @for (item of group.items; track item.route) {
+            <li>
+              <a
+                [routerLink]="item.route"
+                routerLinkActive="bg-indigo-50 text-indigo-700"
+                [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
+                (click)="closeMobile.emit()"
+                [attr.title]="collapsed() ? item.label : null"
+                class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 motion-reduce:transition-none"
+                [class.justify-center]="collapsed()"
+              >
+                <app-icon [name]="item.icon" [size]="20" />
+                @if (!collapsed()) {
+                  <span class="truncate">{{ item.label }}</span>
+                } @else {
+                  <span class="sr-only">{{ item.label }}</span>
+                }
+              </a>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+  </nav>
+</aside>

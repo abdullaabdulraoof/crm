@@ -6,6 +6,7 @@ import {
   FollowUpFormData,
   FollowUpListParams,
   FollowUpResponse,
+  FollowUpSummaryResponse,
   FollowUpsListResponse,
 } from '../follow-ups.types';
 
@@ -19,9 +20,15 @@ export class FollowUpsService {
     if (params.status) httpParams = httpParams.set('status', params.status);
     if (params.type) httpParams = httpParams.set('type', params.type);
     if (params.assignedTo) httpParams = httpParams.set('assignedTo', params.assignedTo);
+    if (params.leadId) httpParams = httpParams.set('leadId', params.leadId);
+    if (params.clientId) httpParams = httpParams.set('clientId', params.clientId);
     if (params.from) httpParams = httpParams.set('from', params.from);
     if (params.to) httpParams = httpParams.set('to', params.to);
     return this.http.get<FollowUpsListResponse>('/api/follow-ups', { params: httpParams });
+  }
+
+  getFollowUpSummary(): Observable<FollowUpSummaryResponse> {
+    return this.http.get<FollowUpSummaryResponse>('/api/follow-ups/summary');
   }
 
   getFollowUp(id: string): Observable<FollowUpResponse> {

@@ -1,20 +1,16 @@
 ﻿import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Router, RouterLink } from '@angular/router';
 
-import { AuthService } from '../auth/auth.service';
 import { DashboardService } from './services/dashboard.service';
 import { ChartBar, DashboardSummary, MonthlyPayment } from './dashboard.types';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule],
   templateUrl: './dashboard.component.html',
 })
 export class Dashboard implements OnInit {
-  protected readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
   private readonly dashboardService = inject(DashboardService);
 
   readonly summary = signal<DashboardSummary | null>(null);
@@ -43,11 +39,6 @@ export class Dashboard implements OnInit {
         this.error.set(this.friendly(err));
       },
     });
-  }
-
-  logout(): void {
-    this.auth.logout();
-    this.router.navigate(['/login']);
   }
 
   private friendly(err: HttpErrorResponse): string {

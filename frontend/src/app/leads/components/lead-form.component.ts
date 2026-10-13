@@ -1,4 +1,15 @@
-﻿import { Component, EventEmitter, inject, Input, OnChanges, OnInit, Output, signal, SimpleChanges } from '@angular/core';
+﻿import {
+  Component,
+  EventEmitter,
+  HostListener,
+  inject,
+  Input,
+  OnChanges,
+  OnInit,
+  Output,
+  signal,
+  SimpleChanges,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 
@@ -6,11 +17,12 @@ import { LeadsService } from '../services/leads.service';
 import { Lead, LeadFormData, LeadSource, LeadStatus } from '../leads.types';
 import { UsersService } from '../../users/users.service';
 import { AssignedUserOption } from '../../users/users.types';
+import { IconComponent } from '../../layout/icon/icon.component';
 
 @Component({
   selector: 'app-lead-form',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, IconComponent],
   templateUrl: './lead-form.component.html',
 })
 export class LeadFormComponent implements OnInit, OnChanges {
@@ -127,6 +139,26 @@ export class LeadFormComponent implements OnInit, OnChanges {
         this.formError.set(msg);
       },
     });
+  }
+
+  showError(name: string): boolean {
+    const control = this.form.get(name);
+    return !!control && control.invalid && (control.touched || control.dirty);
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (!this.submitting()) {
+      this.onCancel();
+    }
+  }
+
+  fieldClass(name: string): string {
+    const base =
+      'mt-1 block w-full rounded-lg border px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2';
+    return this.showError(name)
+      ? base + ' border-red-300 focus:border-red-500 focus:ring-red-500/20'
+      : base + ' border-slate-300 focus:border-indigo-500 focus:ring-indigo-500/20';
   }
 
   onCancel(): void {

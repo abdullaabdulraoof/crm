@@ -112,6 +112,40 @@ describe('FollowUpFormComponent', () => {
     expect(closedWith).toBe(true);
   });
 
+  it('submits clientId (and null leadId) when relatedType is CLIENT', () => {
+    let closedWith: boolean | null = null;
+    component.closed.subscribe((v) => (closedWith = v));
+
+    component.form.patchValue({
+      relatedType: 'CLIENT',
+      clientId: 'client-1',
+      assignedTo: 'u1',
+      type: 'MEETING',
+      subject: 'Kickoff meeting',
+      dueAt: '2026-10-10T10:00',
+    });
+    component.onSubmit();
+
+    const req = httpMock.expectOne('/api/follow-ups');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body.clientId).toBe('client-1');
+    expect(req.request.body.leadId).toBeNull();
+    req.flush({ success: true, data: { followup: FOLLOWUP } });
+
+    expect(closedWith).toBe(true);
+  });
+
+  it('flags the missing related target inline once touched', () => {
+    expect(component.showTargetError()).toBe(false);
+    component.form.controls.leadId.markAsTouched();
+    expect(component.showTargetError()).toBe(true);
+
+    component.form.controls.relatedType.setValue('CLIENT');
+    expect(component.showTargetError()).toBe(false);
+    component.form.controls.clientId.markAsTouched();
+    expect(component.showTargetError()).toBe(true);
+  });
+
   it('populates edit mode and PUTs with status', () => {
     component.followup = FOLLOWUP;
     component.ngOnChanges({ followup: {} as never, isOpen: {} as never });

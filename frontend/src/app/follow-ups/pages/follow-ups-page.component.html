@@ -1,178 +1,331 @@
-<div class="min-h-dvh bg-gray-50">
-  <header class="border-b border-gray-200 bg-white">
-    <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-4">
-      <div>
-        <h1 class="text-lg font-semibold text-gray-900">Follow-ups</h1>
-        <p class="text-sm text-gray-500">Manage upcoming and completed follow-ups</p>
+<div>
+  <!-- Page header -->
+  <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h1 class="text-xl font-semibold text-slate-900">Follow-ups</h1>
+      <p class="text-sm text-slate-500">Manage calls, meetings, and upcoming client activities.</p>
+    </div>
+    <button
+      type="button"
+      (click)="onAdd()"
+      class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 motion-reduce:transition-none"
+    >
+      <app-icon name="plus" [size]="16" />
+      Add Follow-up
+    </button>
+  </div>
+
+  @if (success()) {
+    <div class="mb-4 flex items-center gap-2 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700" role="status">
+      <app-icon name="success" [size]="18" class="shrink-0" />
+      <span>{{ success() }}</span>
+    </div>
+  }
+  @if (error() && followUps().length > 0) {
+    <div class="mb-4 flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
+      <app-icon name="error" [size]="18" class="shrink-0" />
+      <span class="flex-1">{{ error() }}</span>
+      <button type="button" (click)="refresh()" class="font-semibold underline">Retry</button>
+    </div>
+  }
+
+  <!-- Summary cards -->
+  <section class="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4" aria-label="Follow-up summary">
+    @if (summaryLoading() && !summary()) {
+      @for (i of [1, 2, 3, 4]; track i) {
+        <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div class="h-3 w-20 animate-pulse rounded bg-slate-200 motion-reduce:animate-none"></div>
+          <div class="mt-3 h-7 w-12 animate-pulse rounded bg-slate-200 motion-reduce:animate-none"></div>
+        </div>
+      }
+    } @else if (summary(); as s) {
+      <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div class="flex items-center justify-between">
+          <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Total Follow-ups</p>
+          <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+            <app-icon name="follow-up" [size]="16" />
+          </span>
+        </div>
+        <p class="mt-2 text-2xl font-semibold text-slate-900">{{ s.total }}</p>
       </div>
+      <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div class="flex items-center justify-between">
+          <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Pending</p>
+          <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+            <app-icon name="follow-up" [size]="16" />
+          </span>
+        </div>
+        <p class="mt-2 text-2xl font-semibold text-slate-900">{{ s.pending }}</p>
+      </div>
+      <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div class="flex items-center justify-between">
+          <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Completed</p>
+          <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-green-50 text-green-600">
+            <app-icon name="success" [size]="16" />
+          </span>
+        </div>
+        <p class="mt-2 text-2xl font-semibold text-slate-900">{{ s.completed }}</p>
+      </div>
+      <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div class="flex items-center justify-between">
+          <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Overdue</p>
+          <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 text-red-600">
+            <app-icon name="error" [size]="16" />
+          </span>
+        </div>
+        <p class="mt-2 text-2xl font-semibold text-slate-900">{{ s.overdue }}</p>
+      </div>
+    } @else if (summaryError()) {
+      <div
+        class="col-span-2 flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500 lg:col-span-4"
+      >
+        <app-icon name="error" [size]="18" class="text-slate-400" />
+        <span class="flex-1">Summary is unavailable right now.</span>
+        <button type="button" (click)="loadSummary()" class="font-semibold text-indigo-600 underline">
+          Retry
+        </button>
+      </div>
+    }
+  </section>
+
+  <!-- Filter toolbar -->
+  <div class="mb-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div class="sm:col-span-2 lg:col-span-1">
+        <label for="filterSearch" class="block text-xs font-medium text-slate-500">Search</label>
+        <input
+          id="filterSearch"
+          type="search"
+          placeholder="Subject or description"
+          [value]="filters().search"
+          (keydown)="onSearchKeydown($event)"
+          class="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+        />
+      </div>
+
+      <div>
+        <label for="filterStatus" class="block text-xs font-medium text-slate-500">Status</label>
+        <select
+          id="filterStatus"
+          [value]="filters().status"
+          (change)="onFilterChange('status', $any($event.target).value)"
+          class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+        >
+          <option value="">All</option>
+          @for (opt of statusOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label for="filterType" class="block text-xs font-medium text-slate-500">Type</label>
+        <select
+          id="filterType"
+          [value]="filters().type"
+          (change)="onFilterChange('type', $any($event.target).value)"
+          class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+        >
+          <option value="">All</option>
+          @for (opt of typeOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label for="filterAssignedTo" class="block text-xs font-medium text-slate-500">Assigned To</label>
+        <select
+          id="filterAssignedTo"
+          [value]="filters().assignedTo"
+          (change)="onFilterChange('assignedTo', $any($event.target).value)"
+          class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+        >
+          <option value="">All</option>
+          @for (u of users(); track trackById(u.id)) {
+            <option [value]="u.id">{{ u.name }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label for="filterLead" class="block text-xs font-medium text-slate-500">Related Lead</label>
+        <select
+          id="filterLead"
+          [value]="filters().leadId"
+          (change)="onFilterChange('leadId', $any($event.target).value)"
+          class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+        >
+          <option value="">All</option>
+          @for (l of leads(); track trackById(l.id)) {
+            <option [value]="l.id">{{ l.name }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label for="filterClient" class="block text-xs font-medium text-slate-500">Related Client</label>
+        <select
+          id="filterClient"
+          [value]="filters().clientId"
+          (change)="onFilterChange('clientId', $any($event.target).value)"
+          class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+        >
+          <option value="">All</option>
+          @for (c of clients(); track trackById(c.id)) {
+            <option [value]="c.id">{{ c.name }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label for="filterFrom" class="block text-xs font-medium text-slate-500">Due from</label>
+        <input
+          id="filterFrom"
+          type="date"
+          [value]="filters().from"
+          (change)="onFilterChange('from', $any($event.target).value)"
+          class="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+        />
+      </div>
+
+      <div>
+        <label for="filterTo" class="block text-xs font-medium text-slate-500">Due to</label>
+        <input
+          id="filterTo"
+          type="date"
+          [value]="filters().to"
+          (change)="onFilterChange('to', $any($event.target).value)"
+          class="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+        />
+      </div>
+    </div>
+
+    <div class="mt-3 flex items-center justify-between">
+      <p class="text-xs text-slate-500">
+        {{ activeFilterCount() }} active {{ activeFilterCount() === 1 ? 'filter' : 'filters' }}
+      </p>
       <button
         type="button"
-        (click)="onAdd()"
-        class="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+        (click)="clearFilters()"
+        [disabled]="!hasActiveFilters()"
+        class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        Add Follow-up
+        Clear Filters
       </button>
     </div>
-  </header>
+  </div>
 
-  <main class="mx-auto max-w-6xl px-4 py-6">
-    @if (success()) {
-      <div class="mb-4 rounded-md bg-green-50 px-3 py-2 text-sm text-green-700" role="status">
-        {{ success() }}
+  <!-- Results -->
+  <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
+    @if (loading()) {
+      <div class="px-4 py-6 text-sm text-slate-500" role="status">Loading follow-ups…</div>
+    } @else if (error() && followUps().length === 0) {
+      <div class="flex flex-col items-center gap-3 px-4 py-12 text-center">
+        <span class="flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-red-500">
+          <app-icon name="error" [size]="24" />
+        </span>
+        <p class="max-w-md text-sm text-slate-600">{{ error() }}</p>
+        <button
+          type="button"
+          (click)="refresh()"
+          class="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+        >
+          <app-icon name="retry" [size]="16" />
+          Retry
+        </button>
       </div>
-    }
-    @if (error()) {
-      <div class="mb-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
-        {{ error() }}
-      </div>
-    }
-
-    <div class="mb-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <div class="sm:col-span-2">
-          <label for="filterSearch" class="block text-xs font-medium text-gray-500">Search (subject or description)</label>
-          <input
-            id="filterSearch"
-            type="search"
-            placeholder="Press Enter to search"
-            [value]="filters().search"
-            (keydown)="onSearchKeydown($event)"
-            class="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
-        </div>
-
-        <div>
-          <label for="filterStatus" class="block text-xs font-medium text-gray-500">Status</label>
-          <select
-            id="filterStatus"
-            [value]="filters().status"
-            (change)="onFilterChange('status', $any($event.target).value)"
-            class="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          >
-            <option value="">All</option>
-            <option value="PENDING">Pending</option>
-            <option value="COMPLETED">Completed</option>
-            <option value="CANCELLED">Cancelled</option>
-          </select>
-        </div>
-
-        <div>
-          <label for="filterType" class="block text-xs font-medium text-gray-500">Type</label>
-          <select
-            id="filterType"
-            [value]="filters().type"
-            (change)="onFilterChange('type', $any($event.target).value)"
-            class="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          >
-            <option value="">All</option>
-            <option value="CALL">Call</option>
-            <option value="MEETING">Meeting</option>
-            <option value="EMAIL">Email</option>
-            <option value="WHATSAPP">WhatsApp</option>
-            <option value="OTHER">Other</option>
-          </select>
-        </div>
-
-        <div>
-          <label for="filterAssignedTo" class="block text-xs font-medium text-gray-500">Assigned To</label>
-          <select
-            id="filterAssignedTo"
-            [value]="filters().assignedTo"
-            (change)="onFilterChange('assignedTo', $any($event.target).value)"
-            class="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          >
-            <option value="">All users</option>
-            @for (u of users(); track u.id) {
-              <option [value]="u.id">{{ u.name }}</option>
-            }
-          </select>
-        </div>
-
-        <div>
-          <label for="filterFrom" class="block text-xs font-medium text-gray-500">From Date</label>
-          <input
-            id="filterFrom"
-            type="date"
-            [value]="filters().from"
-            (change)="onFilterChange('from', $any($event.target).value)"
-            class="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
-        </div>
-
-        <div>
-          <label for="filterTo" class="block text-xs font-medium text-gray-500">To Date</label>
-          <input
-            id="filterTo"
-            type="date"
-            [value]="filters().to"
-            (change)="onFilterChange('to', $any($event.target).value)"
-            class="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
-        </div>
-
-        <div class="flex items-end">
+    } @else if (followUps().length === 0) {
+      <div class="flex flex-col items-center gap-3 px-4 py-12 text-center">
+        <span class="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+          <app-icon name="follow-up" [size]="24" />
+        </span>
+        <p class="text-sm text-slate-600">No follow-ups found.</p>
+        @if (hasActiveFilters()) {
           <button
             type="button"
             (click)="clearFilters()"
-            [disabled]="!hasActiveFilters()"
-            class="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+            class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
           >
             Clear Filters
           </button>
-        </div>
-      </div>
-    </div>
-
-    <div class="rounded-lg border border-gray-200 bg-white shadow-sm">
-      @if (loading()) {
-        <div class="px-4 py-6 text-sm text-gray-600">Loading follow-ups...</div>
-      } @else if (followUps().length === 0) {
-        <div class="flex flex-col items-center justify-center px-4 py-10 text-center">
-          <p class="text-sm text-gray-600">No follow-ups found.</p>
+        } @else {
           <button
             type="button"
             (click)="onAdd()"
-            class="mt-4 rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+            class="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
           >
+            <app-icon name="plus" [size]="16" />
             Add Follow-up
           </button>
-        </div>
-      } @else {
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200 text-sm">
-            <thead class="bg-gray-50">
-              <tr>
-                <th scope="col" class="px-4 py-3 text-left font-medium text-gray-700">Related To</th>
-                <th scope="col" class="px-4 py-3 text-left font-medium text-gray-700">Type</th>
-                <th scope="col" class="px-4 py-3 text-left font-medium text-gray-700">Subject</th>
-                <th scope="col" class="px-4 py-3 text-left font-medium text-gray-700">Assigned To</th>
-                <th scope="col" class="px-4 py-3 text-left font-medium text-gray-700">Due Date</th>
-                <th scope="col" class="px-4 py-3 text-left font-medium text-gray-700">Status</th>
-                <th scope="col" class="px-4 py-3 text-right font-medium text-gray-700">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100 bg-white">
-              @for (f of followUps(); track trackById(f.id)) {
-                <tr>
-                  <td class="px-4 py-3 text-gray-900">{{ relatedTo(f) }}</td>
-                  <td class="px-4 py-3 text-gray-700">{{ displayType(f.type) }}</td>
-                  <td class="px-4 py-3 text-gray-700">{{ f.subject }}</td>
-                  <td class="px-4 py-3 text-gray-700">{{ assignedName(f) }}</td>
-                  <td class="px-4 py-3 text-gray-700">{{ displayDate(f.dueAt) }}</td>
-                  <td class="px-4 py-3">
-                    <span
-                      class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset {{ statusClass(f.status) }}"
+        }
+      </div>
+    } @else {
+      <!-- Desktop table -->
+      <div class="hidden overflow-x-auto md:block">
+        <table class="min-w-full divide-y divide-slate-200 text-sm">
+          <thead class="bg-slate-50">
+            <tr class="text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <th scope="col" class="px-4 py-3">Subject</th>
+              <th scope="col" class="px-4 py-3">Related To</th>
+              <th scope="col" class="px-4 py-3">Type</th>
+              <th scope="col" class="px-4 py-3">Assigned To</th>
+              <th scope="col" class="px-4 py-3">Due Date</th>
+              <th scope="col" class="px-4 py-3">Status</th>
+              <th scope="col" class="px-4 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            @for (f of followUps(); track trackById(f.id)) {
+              <tr class="transition-colors hover:bg-slate-50 motion-reduce:transition-none">
+                <td class="px-4 py-3">
+                  <p class="max-w-[18rem] truncate font-medium text-slate-900" [title]="f.subject">
+                    {{ f.subject }}
+                  </p>
+                  @if (f.description) {
+                    <p class="max-w-[18rem] truncate text-xs text-slate-400" [title]="f.description">
+                      {{ f.description }}
+                    </p>
+                  }
+                </td>
+                <td class="px-4 py-3">
+                  <p class="text-slate-700">{{ relatedTo(f) }}</p>
+                  @if (relatedKind(f)) {
+                    <p class="text-xs text-slate-400">{{ relatedKind(f) }}</p>
+                  }
+                </td>
+                <td class="px-4 py-3 text-slate-700">{{ displayType(f.type) }}</td>
+                <td class="px-4 py-3 text-slate-700">{{ assignedName(f) }}</td>
+                <td class="px-4 py-3 text-slate-700">{{ displayDate(f.dueAt) }}</td>
+                <td class="px-4 py-3">
+                  <span
+                    class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset {{ statusClass(f) }}"
+                  >
+                    @if (isOverdue(f)) {
+                      <app-icon name="error" [size]="12" />
+                    } @else {
+                      <span class="h-1.5 w-1.5 rounded-full {{ statusDotClass(f) }}" aria-hidden="true"></span>
+                    }
+                    {{ statusLabel(f) }}
+                  </span>
+                </td>
+                <td class="px-4 py-3">
+                  <div class="flex flex-wrap items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      (click)="onView(f)"
+                      class="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                     >
-                      {{ displayStatus(f.status) }}
-                    </span>
-                  </td>
-                  <td class="px-4 py-3 text-right">
+                      <app-icon name="eye" [size]="14" />
+                      View
+                    </button>
                     <button
                       type="button"
                       (click)="onEdit(f)"
                       [disabled]="busyId() === f.id"
-                      class="mr-1.5 rounded-md border border-gray-300 px-2 py-1 text-xs text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                      class="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
                     >
+                      <app-icon name="edit" [size]="14" />
                       Edit
                     </button>
                     @if (f.status === 'PENDING') {
@@ -180,17 +333,18 @@
                         type="button"
                         (click)="onComplete(f)"
                         [disabled]="busyId() === f.id"
-                        class="mr-1.5 rounded-md border border-green-300 px-2 py-1 text-xs text-green-700 hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-50"
+                        class="inline-flex items-center gap-1 rounded-lg border border-green-300 px-2.5 py-1.5 text-xs font-medium text-green-700 hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        {{ busyId() === f.id ? 'Completing...' : 'Complete' }}
+                        <app-icon name="success" [size]="14" />
+                        {{ busyId() === f.id ? 'Working…' : 'Complete' }}
                       </button>
                       <button
                         type="button"
                         (click)="onCancel(f)"
                         [disabled]="busyId() === f.id"
-                        class="mr-1.5 rounded-md border border-gray-300 px-2 py-1 text-xs text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                        class="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        {{ busyId() === f.id ? 'Cancelling...' : 'Cancel' }}
+                        {{ busyId() === f.id ? 'Working…' : 'Cancel' }}
                       </button>
                     }
                     @if (canDelete()) {
@@ -198,47 +352,162 @@
                         type="button"
                         (click)="onDelete(f)"
                         [disabled]="busyId() === f.id"
-                        class="rounded-md border border-red-300 px-2 py-1 text-xs text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                        class="inline-flex items-center gap-1 rounded-lg border border-red-300 px-2.5 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        {{ busyId() === f.id ? 'Deleting...' : 'Delete' }}
+                        <app-icon name="trash" [size]="14" />
+                        {{ busyId() === f.id ? 'Working…' : 'Delete' }}
                       </button>
                     }
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-
-        <div class="flex items-center justify-between border-t px-4 py-3">
-          <span class="text-sm text-gray-600">
-            Page {{ page() }} of {{ totalPages() > 0 ? totalPages() : 1 }}
-            @if (total() > 0) {
-              <span class="text-gray-400">({{ total() }} total)</span>
+                  </div>
+                </td>
+              </tr>
             }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Mobile cards -->
+      <ul class="divide-y divide-slate-100 md:hidden">
+        @for (f of followUps(); track trackById(f.id)) {
+          <li class="p-4">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="truncate font-medium text-slate-900" [title]="f.subject">{{ f.subject }}</p>
+                <p class="mt-0.5 text-xs text-slate-500">
+                  {{ relatedKind(f) ? relatedKind(f) + ': ' : '' }}{{ relatedTo(f) }}
+                </p>
+              </div>
+              <span
+                class="shrink-0 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset {{ statusClass(f) }}"
+              >
+                @if (isOverdue(f)) {
+                  <app-icon name="error" [size]="12" />
+                } @else {
+                  <span class="h-1.5 w-1.5 rounded-full {{ statusDotClass(f) }}" aria-hidden="true"></span>
+                }
+                {{ statusLabel(f) }}
+              </span>
+            </div>
+
+            <dl class="mt-3 grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <dt class="text-slate-400">Type</dt>
+                <dd class="mt-0.5 text-slate-700">{{ displayType(f.type) }}</dd>
+              </div>
+              <div>
+                <dt class="text-slate-400">Assigned to</dt>
+                <dd class="mt-0.5 text-slate-700">{{ assignedName(f) }}</dd>
+              </div>
+              <div>
+                <dt class="text-slate-400">Due</dt>
+                <dd class="mt-0.5 text-slate-700">{{ displayDate(f.dueAt) }}</dd>
+              </div>
+            </dl>
+
+            <div class="mt-3 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                (click)="onView(f)"
+                class="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+              >
+                <app-icon name="eye" [size]="14" />
+                View
+              </button>
+              <button
+                type="button"
+                (click)="onEdit(f)"
+                [disabled]="busyId() === f.id"
+                class="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <app-icon name="edit" [size]="14" />
+                Edit
+              </button>
+              @if (f.status === 'PENDING') {
+                <button
+                  type="button"
+                  (click)="onComplete(f)"
+                  [disabled]="busyId() === f.id"
+                  class="inline-flex items-center gap-1 rounded-lg border border-green-300 px-3 py-2 text-xs font-medium text-green-700 hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <app-icon name="success" [size]="14" />
+                  Complete
+                </button>
+                <button
+                  type="button"
+                  (click)="onCancel(f)"
+                  [disabled]="busyId() === f.id"
+                  class="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+              }
+              @if (canDelete()) {
+                <button
+                  type="button"
+                  (click)="onDelete(f)"
+                  [disabled]="busyId() === f.id"
+                  class="inline-flex items-center gap-1 rounded-lg border border-red-300 px-3 py-2 text-xs font-medium text-red-700 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <app-icon name="trash" [size]="14" />
+                  Delete
+                </button>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+
+      <!-- Pagination -->
+      <div class="flex flex-col gap-3 border-t border-slate-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <p class="text-sm text-slate-600">
+          Showing
+          <span class="font-medium text-slate-900">{{ rangeStart() }}</span>
+          –
+          <span class="font-medium text-slate-900">{{ rangeEnd() }}</span>
+          of <span class="font-medium text-slate-900">{{ total() }}</span>
+          <span class="ml-2 text-slate-400">
+            Page {{ page() }} of {{ totalPages() > 0 ? totalPages() : 1 }}
           </span>
-          <div class="flex items-center gap-2">
+        </p>
+
+        <div class="flex items-center gap-3">
+          <label class="flex items-center gap-2 text-xs text-slate-500">
+            Rows
+            <select
+              [value]="limit()"
+              (change)="onPageSize($any($event.target).value)"
+              class="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            >
+              @for (size of pageSizes; track size) {
+                <option [value]="size">{{ size }}</option>
+              }
+            </select>
+          </label>
+
+          <div class="flex items-center gap-1">
             <button
               type="button"
               (click)="prevPage()"
               [disabled]="page() <= 1"
-              class="rounded-md border border-gray-300 px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+              aria-label="Previous page"
+              class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Previous
+              <app-icon name="chevron-left" [size]="18" />
             </button>
             <button
               type="button"
               (click)="nextPage()"
               [disabled]="page() >= (totalPages() > 0 ? totalPages() : 1)"
-              class="rounded-md border border-gray-300 px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+              aria-label="Next page"
+              class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Next
+              <app-icon name="chevron-right" [size]="18" />
             </button>
           </div>
         </div>
-      }
-    </div>
-  </main>
+      </div>
+    }
+  </div>
 
   @if (showForm()) {
     <app-follow-up-form
@@ -248,5 +517,13 @@
       (closed)="onFormClosed($event)"
       (cancelled)="onFormCancelled()"
     ></app-follow-up-form>
+  }
+
+  @if (viewing()) {
+    <app-follow-up-view
+      [followUp]="viewing()"
+      [isOpen]="!!viewing()"
+      (closed)="onViewClosed()"
+    ></app-follow-up-view>
   }
 </div>

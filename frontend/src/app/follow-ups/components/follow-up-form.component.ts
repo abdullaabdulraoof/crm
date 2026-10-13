@@ -1,4 +1,15 @@
-import { Component, EventEmitter, inject, Input, OnChanges, OnInit, Output, signal, SimpleChanges } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  HostListener,
+  inject,
+  Input,
+  OnChanges,
+  OnInit,
+  Output,
+  signal,
+  SimpleChanges,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 
@@ -10,11 +21,12 @@ import { LeadsService } from '../../leads/services/leads.service';
 import { Lead } from '../../leads/leads.types';
 import { ClientsService } from '../../clients/clients.service';
 import { ClientOption } from '../../clients/clients.types';
+import { IconComponent } from '../../layout/icon/icon.component';
 
 @Component({
   selector: 'app-follow-up-form',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, IconComponent],
   templateUrl: './follow-up-form.component.html',
 })
 export class FollowUpFormComponent implements OnInit, OnChanges {
@@ -133,6 +145,35 @@ export class FollowUpFormComponent implements OnInit, OnChanges {
       ? this.form.controls.leadId.value
       : this.form.controls.clientId.value;
     return !target;
+  }
+
+  showError(name: string): boolean {
+    const control = this.form.get(name);
+    return !!control && control.invalid && (control.touched || control.dirty);
+  }
+
+  showTargetError(): boolean {
+    if (!this.needsTarget) return false;
+    const control =
+      this.form.controls.relatedType.value === 'LEAD'
+        ? this.form.controls.leadId
+        : this.form.controls.clientId;
+    return control.touched || control.dirty;
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (!this.submitting()) {
+      this.onCancel();
+    }
+  }
+
+  fieldClass(name: string): string {
+    const base =
+      'mt-1 block w-full rounded-lg border px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2';
+    return this.showError(name)
+      ? base + ' border-red-300 focus:border-red-500 focus:ring-red-500/20'
+      : base + ' border-slate-300 focus:border-indigo-500 focus:ring-indigo-500/20';
   }
 
   onSubmit(): void {

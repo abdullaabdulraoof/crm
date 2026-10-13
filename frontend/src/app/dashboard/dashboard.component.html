@@ -1,30 +1,8 @@
-﻿<div class="min-h-dvh bg-gray-50">
-  <header class="border-b border-gray-200 bg-white">
-    <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-4">
-      <h1 class="text-lg font-semibold text-gray-900">Dashboard</h1>
-      <div class="flex flex-wrap items-center gap-4">
-        <a routerLink="/leads" class="text-sm font-medium text-blue-600 hover:text-blue-700">Leads</a>
-        <a routerLink="/follow-ups" class="text-sm font-medium text-blue-600 hover:text-blue-700">Follow-ups</a>
-        <a routerLink="/products" class="text-sm font-medium text-blue-600 hover:text-blue-700">Products</a>
-        <a routerLink="/quotations" class="text-sm font-medium text-blue-600 hover:text-blue-700">Quotations</a>
-        <a routerLink="/invoices" class="text-sm font-medium text-blue-600 hover:text-blue-700">Invoices</a>
-        <a routerLink="/payments" class="text-sm font-medium text-blue-600 hover:text-blue-700">Payments</a>
-        <a routerLink="/reports" class="text-sm font-medium text-blue-600 hover:text-blue-700">Reports</a>
-        @if (auth.user()?.name) {
-          <span class="text-sm text-gray-600">{{ auth.user()?.name }}</span>
-        }
-        <button
-          type="button"
-          (click)="logout()"
-          class="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
-        >
-          Logout
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <main class="mx-auto max-w-6xl px-4 py-8">
+﻿<div>
+  <div class="mb-6">
+    <h1 class="text-xl font-semibold text-slate-900">Dashboard</h1>
+    <p class="text-sm text-slate-500">Overview of your sales pipeline and activity</p>
+  </div>
     @if (error()) {
       <div class="mb-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
         {{ error() }}
@@ -248,5 +226,4 @@
         </div>
       </section>
     }
-  </main>
 </div>

@@ -12,6 +12,8 @@ const deleteRoles = [...FOLLOWUP_DELETE_ROLES];
 // All follow-ups are scoped to the authenticated user's company in the service layer.
 router.post("/", authenticate, authorize(...editRoles), validate(createRules), controller.create);
 router.get("/", authenticate, authorize(...editRoles), controller.list);
+// Registered before "/:id" so the literal path is never captured as an id.
+router.get("/summary", authenticate, authorize(...editRoles), controller.summary);
 router.get("/:id", authenticate, authorize(...editRoles), controller.getOne);
 router.put("/:id", authenticate, authorize(...editRoles), validate(updateRules), controller.update);
 router.delete("/:id", authenticate, authorize(...deleteRoles), controller.remove);

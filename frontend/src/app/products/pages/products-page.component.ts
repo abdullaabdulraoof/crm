@@ -1,10 +1,12 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { ProductsService } from '../services/products.service';
 import { Product } from '../products.types';
 import { ProductFormComponent } from '../components/product-form.component';
+import { ProductViewComponent } from '../components/product-view.component';
+import { IconComponent } from '../../layout/icon/icon.component';
 import { AuthService } from '../../auth/auth.service';
 
 interface Filters {
@@ -15,10 +17,22 @@ interface Filters {
 
 const EMPTY_FILTERS: Filters = { search: '', type: '', isActive: '' };
 
+const TYPE_OPTIONS: { value: string; label: string }[] = [
+  { value: 'PRODUCT', label: 'Product' },
+  { value: 'SERVICE', label: 'Service' },
+];
+
+const STATUS_OPTIONS: { value: string; label: string }[] = [
+  { value: 'true', label: 'Active' },
+  { value: 'false', label: 'Inactive' },
+];
+
+const PAGE_SIZES = [10, 25, 50, 100];
+
 @Component({
   selector: 'app-products-page',
   standalone: true,
-  imports: [CommonModule, ProductFormComponent],
+  imports: [CommonModule, ProductFormComponent, ProductViewComponent, IconComponent],
   templateUrl: './products-page.component.html',
 })
 export class ProductsPageComponent implements OnInit {
@@ -30,27 +44,33 @@ export class ProductsPageComponent implements OnInit {
   readonly error = signal<string | null>(null);
   readonly success = signal<string | null>(null);
   readonly page = signal(1);
-  readonly limit = 10;
+  readonly limit = signal(10);
   readonly totalPages = signal(1);
   readonly total = signal(0);
   readonly filters = signal<Filters>({ ...EMPTY_FILTERS });
-  readonly showForm = signal(false);
-  readonly editing = signal<Product | null>(null);
   readonly busyId = signal<string | null>(null);
 
-  // Frontend convenience only - the backend enforces the real permissions.
-  readonly canEdit = signal(false);
-  readonly canDeactivate = signal(false);
+  readonly showForm = signal(false);
+  readonly editing = signal<Product | null>(null);
+  readonly viewing = signal<Product | null>(null);
+
+  readonly typeOptions = TYPE_OPTIONS;
+  readonly statusOptions = STATUS_OPTIONS;
+  readonly pageSizes = PAGE_SIZES;
+
+  private readonly canEdit = ['OWNER', 'ADMIN', 'MANAGER', 'SALES'];
+
+  readonly canCreate = computed(() => this.canEdit.includes(this.auth.user()?.role ?? ''));
+  readonly canDeactivate = computed(() => {
+    const role = this.auth.user()?.role;
+    return role === 'OWNER' || role === 'ADMIN';
+  });
+
+  readonly rangeStart = computed(() => (this.total() === 0 ? 0 : (this.page() - 1) * this.limit() + 1));
+  readonly rangeEnd = computed(() => Math.min(this.page() * this.limit(), this.total()));
 
   ngOnInit(): void {
-    this.updatePermissions();
     this.refresh();
-  }
-
-  private updatePermissions(): void {
-    const role = this.auth.user()?.role;
-    this.canEdit.set(['OWNER', 'ADMIN', 'MANAGER', 'SALES'].includes(role ?? ''));
-    this.canDeactivate.set(role === 'OWNER' || role === 'ADMIN');
   }
 
   refresh(): void {
@@ -60,7 +80,7 @@ export class ProductsPageComponent implements OnInit {
     this.productsService
       .getProducts({
         page: this.page(),
-        limit: this.limit,
+        limit: this.limit(),
         search: f.search || undefined,
         type: f.type || undefined,
         isActive: f.isActive || undefined,
@@ -116,9 +136,21 @@ export class ProductsPageComponent implements OnInit {
     this.refresh();
   }
 
-  hasActiveFilters(): boolean {
+  activeFilterCount(): number {
     const f = this.filters();
-    return !!(f.search || f.type || f.isActive);
+    return [f.search, f.type, f.isActive].filter((value) => !!value).length;
+  }
+
+  hasActiveFilters(): boolean {
+    return this.activeFilterCount() > 0;
+  }
+
+  onPageSize(value: string): void {
+    const size = Number(value);
+    if (!Number.isFinite(size) || size === this.limit()) return;
+    this.limit.set(size);
+    this.page.set(1);
+    this.refresh();
   }
 
   onAdd(): void {
@@ -126,6 +158,14 @@ export class ProductsPageComponent implements OnInit {
     this.showForm.set(true);
     this.error.set(null);
     this.success.set(null);
+  }
+
+  onView(product: Product): void {
+    this.viewing.set(product);
+  }
+
+  onViewClosed(): void {
+    this.viewing.set(null);
   }
 
   onEdit(product: Product): void {
@@ -150,9 +190,7 @@ export class ProductsPageComponent implements OnInit {
     request.subscribe({
       next: () => {
         this.busyId.set(null);
-        this.success.set(
-          product.isActive ? 'Product deactivated.' : 'Product activated.'
-        );
+        this.success.set(product.isActive ? 'Product deactivated.' : 'Product activated.');
         this.refresh();
       },
       error: (err: HttpErrorResponse) => {
@@ -196,6 +234,20 @@ export class ProductsPageComponent implements OnInit {
 
   displayPrice(price: number): string {
     return typeof price === 'number' ? price.toLocaleString() : String(price);
+  }
+
+  statusLabel(p: Product): string {
+    return p.isActive ? 'Active' : 'Inactive';
+  }
+
+  statusClass(p: Product): string {
+    return p.isActive
+      ? 'bg-green-50 text-green-700 ring-green-200'
+      : 'bg-slate-100 text-slate-600 ring-slate-200';
+  }
+
+  statusDotClass(p: Product): string {
+    return p.isActive ? 'bg-green-500' : 'bg-slate-400';
   }
 
   trackById(id: string): string {

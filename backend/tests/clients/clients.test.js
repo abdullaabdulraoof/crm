@@ -101,3 +101,25 @@ describe("GET /api/clients", () => {
     expect(res.body.data.clients[0].name).toBe("Other Co");
   });
 });
+
+describe("GET /api/clients/options", () => {
+  test("requires authentication", async () => {
+    const res = await request(app).get("/api/clients/options");
+    expect(res.status).toBe(401);
+    expect(res.body.error.code).toBe("TOKEN_MISSING");
+  });
+
+  test("returns the same picker shape as /api/clients", async () => {
+    const res = await request(app).get("/api/clients/options").set(asUser(tokenOwner));
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.clients).toEqual([
+      {
+        id: activeClient._id.toString(),
+        name: "Zeta Traders",
+        phoneNumber: "1111111111",
+      },
+    ]);
+  });
+});

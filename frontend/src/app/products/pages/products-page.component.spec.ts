@@ -192,6 +192,27 @@ describe('ProductsPageComponent', () => {
     httpMock.expectNone((r) => r.url === '/api/products/p1');
   });
 
+  it('opens the view from a View action and closes it', async () => {
+    await setup();
+    const viewBtn = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('button')
+    ).find((b) => b.textContent?.trim() === 'View') as HTMLButtonElement;
+
+    viewBtn.click();
+    fixture.detectChanges();
+
+    expect(component.viewing()?.id).toBe('p1');
+    const viewEl = fixture.nativeElement.querySelector('app-product-view') as HTMLElement | null;
+    expect(viewEl).toBeTruthy();
+    expect(viewEl?.textContent).toContain('Product details');
+
+    component.onViewClosed();
+    fixture.detectChanges();
+
+    expect(component.viewing()).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-product-view')).toBeNull();
+  });
+
   it('opens the edit form with the selected product', async () => {
     await setup();
 
@@ -255,5 +276,97 @@ describe('ProductsPageComponent', () => {
       .flush({ success: false, error: { message: 'nope' } }, { status: 403, statusText: 'Forbidden' });
 
     expect(component.error()).toBe('You do not have permission to perform this action.');
+  });
+
+  it('changes the page size and refetches from page 1', async () => {
+    await setup();
+
+    component.onPageSize('25');
+
+    const req = httpMock.expectOne(
+      (r) =>
+        r.url === '/api/products' &&
+        r.params.get('limit') === '25' &&
+        r.params.get('page') === '1'
+    );
+    req.flush({ success: true, data: [], pagination: { page: 1, limit: 25, total: 0, totalPages: 0 } });
+    expect(component.limit()).toBe(25);
+  });
+
+  it('ignores an unchanged page size', async () => {
+    await setup();
+
+    component.onPageSize('10');
+
+    httpMock.expectNone((r) => r.url === '/api/products');
+  });
+
+  it('exposes the available page sizes', async () => {
+    await setup();
+    expect(component.pageSizes).toEqual([10, 25, 50, 100]);
+  });
+
+  it('tracks the active filter count and enables Clear Filters', async () => {
+    await setup();
+    expect(component.activeFilterCount()).toBe(0);
+    expect(component.hasActiveFilters()).toBe(false);
+
+    component.filters.set({ search: 'x', type: 'SERVICE', isActive: 'true' });
+    expect(component.activeFilterCount()).toBe(3);
+    expect(component.hasActiveFilters()).toBe(true);
+  });
+
+  it('computes the visible row range from backend metadata', async () => {
+    seedUser('OWNER');
+    await TestBed.configureTestingModule({
+      imports: [ProductsPageComponent],
+      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ProductsPageComponent);
+    component = fixture.componentInstance;
+    httpMock = TestBed.inject(HttpTestingController);
+    fixture.detectChanges();
+    httpMock
+      .expectOne('/api/products?page=1&limit=10')
+      .flush({ ...LIST_RESPONSE, pagination: { page: 1, limit: 10, total: 25, totalPages: 3 } });
+
+    expect(component.rangeStart()).toBe(1);
+    expect(component.rangeEnd()).toBe(10);
+
+    component.nextPage();
+    httpMock
+      .expectOne((r) => r.url === '/api/products' && r.params.get('page') === '2')
+      .flush({ ...LIST_RESPONSE, pagination: { page: 2, limit: 10, total: 25, totalPages: 3 } });
+
+    expect(component.page()).toBe(2);
+    expect(component.rangeStart()).toBe(11);
+    expect(component.rangeEnd()).toBe(20);
+  });
+
+  it('shows a loading state before the list resolves', async () => {
+    seedUser('OWNER');
+    await TestBed.configureTestingModule({
+      imports: [ProductsPageComponent],
+      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ProductsPageComponent);
+    component = fixture.componentInstance;
+    httpMock = TestBed.inject(HttpTestingController);
+    fixture.detectChanges();
+
+    expect(component.loading()).toBe(true);
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Loading products');
+    httpMock.expectOne('/api/products?page=1&limit=10').flush(LIST_RESPONSE);
+  });
+
+  it('renders mobile-friendly product cards alongside the table', async () => {
+    await setup();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('table')).not.toBeNull();
+    expect(el.querySelector('ul')).not.toBeNull();
+    expect(el.textContent).toContain('Unit Price');
+    expect(el.textContent).toContain('GST Rate');
   });
 });

@@ -422,6 +422,107 @@ describe("GET /api/follow-ups", () => {
   });
 });
 
+describe("GET /api/follow-ups search", () => {
+  test("matches subject and description and combines with other filters", async () => {
+    await createForLead(tokenOwner, { type: "CALL", subject: "Renewal call" });
+    await createForLead(tokenOwner, {
+      type: "EMAIL",
+      subject: "Quarterly newsletter",
+      description: "Includes renewal pricing",
+    });
+    await createForLead(tokenOwner, { type: "CALL", subject: "Unrelated topic" });
+
+    const bySubject = await request(app)
+      .get("/api/follow-ups?search=renewal")
+      .set(asUser(tokenOwner));
+    expect(bySubject.status).toBe(200);
+    expect(bySubject.body.data.map((f) => f.subject).sort()).toEqual([
+      "Quarterly newsletter",
+      "Renewal call",
+    ]);
+
+    const combined = await request(app)
+      .get("/api/follow-ups?search=renewal&type=CALL")
+      .set(asUser(tokenOwner));
+    expect(combined.status).toBe(200);
+    expect(combined.body.data).toHaveLength(1);
+    expect(combined.body.data[0].subject).toBe("Renewal call");
+  });
+
+  test("does not leak another company's follow-ups through search", async () => {
+    await createForLead(tokenOwnerB, {
+      leadId: leadB._id.toString(),
+      assignedTo: ownerB._id.toString(),
+      subject: "Renewal secret",
+    });
+
+    const res = await request(app)
+      .get("/api/follow-ups?search=renewal")
+      .set(asUser(tokenOwner));
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveLength(0);
+  });
+});
+
+describe("GET /api/follow-ups/summary", () => {
+  test("requires authentication", async () => {
+    const res = await request(app).get("/api/follow-ups/summary");
+    expect(res.status).toBe(401);
+    expect(res.body.error.code).toBe("TOKEN_MISSING");
+  });
+
+  test("reports totals and derives overdue from PENDING past-due follow-ups", async () => {
+    await createForLead(tokenOwner, { subject: "Overdue", dueAt: "2000-01-01T00:00:00.000Z" });
+    await createForLead(tokenOwner, { subject: "Upcoming", dueAt: "2999-01-01T00:00:00.000Z" });
+    const completed = await createForLead(tokenOwner, {
+      subject: "Done",
+      dueAt: "2000-01-01T00:00:00.000Z",
+    });
+    await request(app)
+      .put(`/api/follow-ups/${completed.body.data.followup.id}`)
+      .set(asUser(tokenOwner))
+      .send({ status: "COMPLETED" });
+    const cancelled = await createForLead(tokenOwner, {
+      subject: "Nope",
+      dueAt: "2000-01-01T00:00:00.000Z",
+    });
+    await request(app)
+      .put(`/api/follow-ups/${cancelled.body.data.followup.id}`)
+      .set(asUser(tokenOwner))
+      .send({ status: "CANCELLED" });
+
+    await createForLead(tokenOwnerB, {
+      leadId: leadB._id.toString(),
+      assignedTo: ownerB._id.toString(),
+      dueAt: "2000-01-01T00:00:00.000Z",
+    });
+
+    const res = await request(app).get("/api/follow-ups/summary").set(asUser(tokenSales));
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({
+      total: 4,
+      pending: 2,
+      completed: 1,
+      cancelled: 1,
+      overdue: 1,
+    });
+  });
+
+  test("returns zeroed counters when the company has no follow-ups", async () => {
+    const res = await request(app).get("/api/follow-ups/summary").set(asUser(tokenOwner));
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({
+      total: 0,
+      pending: 0,
+      completed: 0,
+      cancelled: 0,
+      overdue: 0,
+    });
+  });
+});
+
 describe("GET /api/follow-ups/:id", () => {
   test("12. user cannot view another company's follow-up (404, no leak)", async () => {
     const created = await createForLead(tokenOwnerB, {

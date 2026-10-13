@@ -1,14 +1,25 @@
-import { Component, EventEmitter, inject, Input, OnChanges, Output, signal, SimpleChanges } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  HostListener,
+  inject,
+  Input,
+  OnChanges,
+  Output,
+  signal,
+  SimpleChanges,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { ProductsService } from '../services/products.service';
 import { Product, ProductFormData, ProductType } from '../products.types';
+import { IconComponent } from '../../layout/icon/icon.component';
 
 @Component({
   selector: 'app-product-form',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, IconComponent],
   templateUrl: './product-form.component.html',
 })
 export class ProductFormComponent implements OnChanges {
@@ -65,9 +76,28 @@ export class ProductFormComponent implements OnChanges {
     }
   }
 
-  private toNumber(value: unknown): number {
-    const parsed = typeof value === 'number' ? value : parseFloat(String(value));
-    return Number.isFinite(parsed) ? parsed : NaN;
+  showError(name: string): boolean {
+    const control = this.form.get(name);
+    return !!control && control.invalid && (control.touched || control.dirty);
+  }
+
+  fieldClass(name: string): string {
+    const base =
+      'mt-1 block w-full rounded-lg border px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:bg-slate-50';
+    return this.showError(name)
+      ? base + ' border-red-300 focus:border-red-500 focus:ring-red-500/20'
+      : base + ' border-slate-300 focus:border-indigo-500 focus:ring-indigo-500/20';
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (!this.submitting()) {
+      this.onCancel();
+    }
+  }
+
+  private toNumber(value: number): number {
+    return typeof value === 'number' ? value : Number(value);
   }
 
   onSubmit(): void {

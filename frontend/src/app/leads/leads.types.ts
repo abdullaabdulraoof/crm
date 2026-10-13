@@ -57,6 +57,19 @@ export interface LeadResponse {
   message?: string;
 }
 
+export interface LeadSummary {
+  total: number;
+  new: number;
+  qualified: number;
+  won: number;
+  byStatus: Record<string, number>;
+}
+
+export interface LeadSummaryResponse {
+  success: boolean;
+  data: LeadSummary;
+}
+
 export interface LeadFormData {
   name: string;
   phoneNumber: string;

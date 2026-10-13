@@ -1,13 +1,24 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 
 import { FollowUpsService } from '../services/follow-ups.service';
-import { FollowUp, FollowUpStatus } from '../follow-ups.types';
+import {
+  FollowUp,
+  FollowUpStatus,
+  FollowUpSummary,
+  FollowUpType,
+} from '../follow-ups.types';
 import { FollowUpFormComponent } from '../components/follow-up-form.component';
+import { FollowUpViewComponent } from '../components/follow-up-view.component';
+import { IconComponent } from '../../layout/icon/icon.component';
 import { UsersService } from '../../users/users.service';
 import { AssignedUserOption } from '../../users/users.types';
+import { LeadsService } from '../../leads/services/leads.service';
+import { Lead } from '../../leads/leads.types';
+import { ClientsService } from '../../clients/clients.service';
+import { ClientOption } from '../../clients/clients.types';
 import { AuthService } from '../../auth/auth.service';
 
 interface Filters {
@@ -15,21 +26,50 @@ interface Filters {
   status: string;
   type: string;
   assignedTo: string;
+  leadId: string;
+  clientId: string;
   from: string;
   to: string;
 }
 
-const EMPTY_FILTERS: Filters = { search: '', status: '', type: '', assignedTo: '', from: '', to: '' };
+const EMPTY_FILTERS: Filters = {
+  search: '',
+  status: '',
+  type: '',
+  assignedTo: '',
+  leadId: '',
+  clientId: '',
+  from: '',
+  to: '',
+};
+
+const STATUS_OPTIONS: { value: FollowUpStatus; label: string }[] = [
+  { value: 'PENDING', label: 'Pending' },
+  { value: 'COMPLETED', label: 'Completed' },
+  { value: 'CANCELLED', label: 'Cancelled' },
+];
+
+const TYPE_OPTIONS: { value: FollowUpType; label: string }[] = [
+  { value: 'CALL', label: 'Call' },
+  { value: 'MEETING', label: 'Meeting' },
+  { value: 'EMAIL', label: 'Email' },
+  { value: 'WHATSAPP', label: 'WhatsApp' },
+  { value: 'OTHER', label: 'Other' },
+];
+
+const PAGE_SIZES = [10, 25, 50, 100];
 
 @Component({
   selector: 'app-follow-ups-page',
   standalone: true,
-  imports: [CommonModule, FollowUpFormComponent],
+  imports: [CommonModule, FollowUpFormComponent, FollowUpViewComponent, IconComponent],
   templateUrl: './follow-ups-page.component.html',
 })
 export class FollowUpsPageComponent implements OnInit {
   private readonly followUpsService = inject(FollowUpsService);
   private readonly usersService = inject(UsersService);
+  private readonly leadsService = inject(LeadsService);
+  private readonly clientsService = inject(ClientsService);
   private readonly route = inject(ActivatedRoute);
   readonly auth = inject(AuthService);
 
@@ -38,21 +78,38 @@ export class FollowUpsPageComponent implements OnInit {
   readonly error = signal<string | null>(null);
   readonly success = signal<string | null>(null);
   readonly page = signal(1);
-  readonly limit = 10;
+  readonly limit = signal(10);
   readonly totalPages = signal(1);
   readonly total = signal(0);
   readonly filters = signal<Filters>({ ...EMPTY_FILTERS });
   readonly users = signal<AssignedUserOption[]>([]);
+  readonly leads = signal<Lead[]>([]);
+  readonly clients = signal<ClientOption[]>([]);
   readonly showForm = signal(false);
   readonly editing = signal<FollowUp | null>(null);
+  readonly viewing = signal<FollowUp | null>(null);
   readonly presetLeadId = signal<string | null>(null);
   readonly busyId = signal<string | null>(null);
+  readonly summary = signal<FollowUpSummary | null>(null);
+  readonly summaryLoading = signal(false);
+  readonly summaryError = signal(false);
 
   readonly canDelete = signal(false);
+
+  readonly statusOptions = STATUS_OPTIONS;
+  readonly typeOptions = TYPE_OPTIONS;
+  readonly pageSizes = PAGE_SIZES;
+
+  readonly rangeStart = computed(() =>
+    this.total() === 0 ? 0 : (this.page() - 1) * this.limit() + 1
+  );
+  readonly rangeEnd = computed(() => Math.min(this.page() * this.limit(), this.total()));
 
   ngOnInit(): void {
     this.updatePermissions();
     this.loadUsers();
+    this.loadTargets();
+    this.loadSummary();
     const leadId = this.route.snapshot.queryParamMap.get('leadId');
     if (leadId) this.presetLeadId.set(leadId);
     this.refresh();
@@ -65,9 +122,36 @@ export class FollowUpsPageComponent implements OnInit {
   }
 
   private loadUsers(): void {
+    // Picker failure must not block the list; the filter simply has no options.
     this.usersService.getAssignedToOptions().subscribe({
-      next: (list) => this.users.set(list),
+      next: (list) => this.users.set(list || []),
       error: () => this.users.set([]),
+    });
+  }
+
+  private loadTargets(): void {
+    this.leadsService.getLeads({ limit: 100 }).subscribe({
+      next: (res) => this.leads.set(res.data || []),
+      error: () => this.leads.set([]),
+    });
+    this.clientsService.getClients().subscribe({
+      next: (list) => this.clients.set(list || []),
+      error: () => this.clients.set([]),
+    });
+  }
+
+  loadSummary(): void {
+    this.summaryLoading.set(true);
+    this.summaryError.set(false);
+    this.followUpsService.getFollowUpSummary().subscribe({
+      next: (res) => {
+        this.summaryLoading.set(false);
+        this.summary.set(res.data);
+      },
+      error: () => {
+        this.summaryLoading.set(false);
+        this.summaryError.set(true);
+      },
     });
   }
 
@@ -78,11 +162,13 @@ export class FollowUpsPageComponent implements OnInit {
     this.followUpsService
       .getFollowUps({
         page: this.page(),
-        limit: this.limit,
+        limit: this.limit(),
         search: f.search || undefined,
         status: f.status || undefined,
         type: f.type || undefined,
         assignedTo: f.assignedTo || undefined,
+        leadId: f.leadId || undefined,
+        clientId: f.clientId || undefined,
         from: f.from || undefined,
         to: f.to || undefined,
       })
@@ -138,8 +224,22 @@ export class FollowUpsPageComponent implements OnInit {
   }
 
   hasActiveFilters(): boolean {
+    return this.activeFilterCount() > 0;
+  }
+
+  activeFilterCount(): number {
     const f = this.filters();
-    return !!(f.search || f.status || f.type || f.assignedTo || f.from || f.to);
+    return [f.search, f.status, f.type, f.assignedTo, f.leadId, f.clientId, f.from, f.to].filter(
+      (value) => !!value
+    ).length;
+  }
+
+  onPageSize(value: string): void {
+    const size = Number(value);
+    if (!Number.isFinite(size) || size === this.limit()) return;
+    this.limit.set(size);
+    this.page.set(1);
+    this.refresh();
   }
 
   onAdd(): void {
@@ -147,6 +247,14 @@ export class FollowUpsPageComponent implements OnInit {
     this.showForm.set(true);
     this.error.set(null);
     this.success.set(null);
+  }
+
+  onView(followup: FollowUp): void {
+    this.viewing.set(followup);
+  }
+
+  onViewClosed(): void {
+    this.viewing.set(null);
   }
 
   onEdit(followup: FollowUp): void {
@@ -191,6 +299,7 @@ export class FollowUpsPageComponent implements OnInit {
             : 'Follow-up cancelled.'
         );
         this.refresh();
+        this.loadSummary();
       },
       error: (err: HttpErrorResponse) => {
         this.busyId.set(null);
@@ -200,7 +309,7 @@ export class FollowUpsPageComponent implements OnInit {
   }
 
   onDelete(followup: FollowUp): void {
-    if (!confirm('Are you sure you want to delete this follow-up?\n\nCancel = keep, Delete = remove')) return;
+    if (!confirm('Are you sure you want to delete this follow-up?')) return;
     if (this.busyId()) return;
     this.busyId.set(followup.id);
     this.error.set(null);
@@ -210,6 +319,7 @@ export class FollowUpsPageComponent implements OnInit {
         this.busyId.set(null);
         this.success.set('Follow-up deleted successfully.');
         this.refresh();
+        this.loadSummary();
       },
       error: (err: HttpErrorResponse) => {
         this.busyId.set(null);
@@ -225,6 +335,7 @@ export class FollowUpsPageComponent implements OnInit {
     if (saved) {
       this.success.set('Follow-up saved successfully.');
       this.refresh();
+      this.loadSummary();
     }
   }
 
@@ -248,11 +359,26 @@ export class FollowUpsPageComponent implements OnInit {
     }
   }
 
+  isOverdue(f: FollowUp): boolean {
+    if (f.status !== 'PENDING' || !f.dueAt) return false;
+    const due = new Date(f.dueAt).getTime();
+    return !Number.isNaN(due) && due < Date.now();
+  }
+
+  statusLabel(f: FollowUp): string {
+    return this.isOverdue(f) ? 'Overdue' : this.displayStatus(f.status);
+  }
+
   relatedTo(f: FollowUp): string {
     const target = f.lead || f.client;
     if (target && typeof target === 'object') return target.name;
-    if (typeof target === 'string') return '-';
     return '-';
+  }
+
+  relatedKind(f: FollowUp): string {
+    if (f.lead && typeof f.lead === 'object') return 'Lead';
+    if (f.client && typeof f.client === 'object') return 'Client';
+    return '';
   }
 
   displayType(t: string): string {
@@ -275,13 +401,24 @@ export class FollowUpsPageComponent implements OnInit {
     return map[s] || s;
   }
 
-  statusClass(s: string): string {
+  statusClass(f: FollowUp): string {
+    if (this.isOverdue(f)) return 'bg-red-50 text-red-700 ring-red-200';
     const map: Record<string, string> = {
       PENDING: 'bg-amber-50 text-amber-700 ring-amber-200',
       COMPLETED: 'bg-green-50 text-green-700 ring-green-200',
-      CANCELLED: 'bg-gray-100 text-gray-600 ring-gray-200',
+      CANCELLED: 'bg-slate-100 text-slate-600 ring-slate-200',
     };
-    return map[s] || 'bg-gray-100 text-gray-600 ring-gray-200';
+    return map[f.status] || 'bg-slate-100 text-slate-600 ring-slate-200';
+  }
+
+  statusDotClass(f: FollowUp): string {
+    if (this.isOverdue(f)) return 'bg-red-500';
+    const map: Record<string, string> = {
+      PENDING: 'bg-amber-500',
+      COMPLETED: 'bg-green-500',
+      CANCELLED: 'bg-slate-400',
+    };
+    return map[f.status] || 'bg-slate-400';
   }
 
   assignedName(f: FollowUp): string {

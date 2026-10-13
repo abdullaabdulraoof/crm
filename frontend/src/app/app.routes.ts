@@ -5,6 +5,7 @@ import { ForgotPassword } from './auth/forgot-password/forgot-password.component
 import { Login } from './auth/login/login.component';
 import { ResetPassword } from './auth/reset-password/reset-password.component';
 import { Dashboard } from './dashboard/dashboard.component';
+import { LayoutComponent } from './layout/layout.component';
 import { LeadsPageComponent } from './leads/pages/leads-page.component';
 import { FollowUpsPageComponent } from './follow-ups/pages/follow-ups-page.component';
 import { ProductsPageComponent } from './products/pages/products-page.component';
@@ -18,13 +19,21 @@ export const routes: Routes = [
   { path: 'login', component: Login, canActivate: [alreadyAuthGuard] },
   { path: 'forgot-password', component: ForgotPassword },
   { path: 'reset-password', component: ResetPassword },
-  { path: 'dashboard', component: Dashboard, canActivate: [authGuard] },
-  { path: 'leads', component: LeadsPageComponent, canActivate: [authGuard] },
-  { path: 'follow-ups', component: FollowUpsPageComponent, canActivate: [authGuard] },
-  { path: 'products', component: ProductsPageComponent, canActivate: [authGuard] },
-  { path: 'quotations', component: QuotationsPageComponent, canActivate: [authGuard] },
-  { path: 'invoices', component: InvoicesPageComponent, canActivate: [authGuard] },
-  { path: 'payments', component: PaymentsPageComponent, canActivate: [authGuard] },
-  { path: 'reports', component: ReportsPageComponent, canActivate: [authGuard] },
+  {
+    path: '',
+    component: LayoutComponent,
+    canActivate: [authGuard],
+    children: [
+      { path: 'dashboard', component: Dashboard, data: { title: 'Dashboard' } },
+      { path: 'leads', component: LeadsPageComponent, data: { title: 'Leads' } },
+      { path: 'follow-ups', component: FollowUpsPageComponent, data: { title: 'Follow-ups' } },
+      { path: 'products', component: ProductsPageComponent, data: { title: 'Products' } },
+      { path: 'quotations', component: QuotationsPageComponent, data: { title: 'Quotations' } },
+      { path: 'invoices', component: InvoicesPageComponent, data: { title: 'Invoices' } },
+      { path: 'payments', component: PaymentsPageComponent, data: { title: 'Payments' } },
+      { path: 'reports', component: ReportsPageComponent, data: { title: 'Reports' } },
+      { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
+    ],
+  },
   { path: '**', redirectTo: 'login' },
 ];

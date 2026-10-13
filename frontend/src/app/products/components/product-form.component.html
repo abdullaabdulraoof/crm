@@ -1,62 +1,150 @@
-<div class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 px-4">
-  <div class="w-full max-w-2xl rounded-lg bg-white shadow-xl">
-    <div class="flex items-center justify-between border-b px-6 py-4">
-      <h2 class="text-lg font-semibold text-gray-900">{{ isEdit ? 'Edit Product' : 'Add Product' }}</h2>
-      <button type="button" (click)="onCancel()" class="text-gray-500 hover:text-gray-700">Close</button>
+<div
+  class="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 sm:items-center sm:px-4"
+  (click)="onCancel()"
+>
+  <div
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="productFormTitle"
+    class="flex max-h-[92dvh] w-full max-w-2xl flex-col rounded-t-2xl bg-white shadow-xl sm:rounded-2xl"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4 sm:px-6">
+      <h2 id="productFormTitle" class="text-lg font-semibold text-slate-900">
+        {{ isEdit ? 'Edit Product' : 'Add Product' }}
+      </h2>
+      <button
+        type="button"
+        (click)="onCancel()"
+        aria-label="Close"
+        class="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 motion-reduce:transition-none"
+      >
+        <app-icon name="close" [size]="18" />
+      </button>
     </div>
 
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="space-y-4 px-6 py-4">
-      <div class="grid gap-4 md:grid-cols-2">
-        <div class="md:col-span-2">
-          <label for="name" class="block text-sm font-medium text-gray-700">Name *</label>
-          <input id="name" type="text" formControlName="name" maxlength="200" class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-          @if (form.controls.name.touched && form.controls.name.invalid) {
-            <p class="mt-1 text-sm text-red-600">Name is required (2-200 characters).</p>
-          }
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="flex min-h-0 flex-1 flex-col">
+      <div class="flex-1 overflow-y-auto px-5 py-5 sm:px-6">
+        <div class="grid gap-4 md:grid-cols-2">
+          <div class="md:col-span-2">
+            <label for="name" class="block text-sm font-medium text-slate-700">
+              Name <span class="text-red-500">*</span>
+            </label>
+            <input
+              id="name"
+              type="text"
+              formControlName="name"
+              maxlength="200"
+              [attr.aria-invalid]="showError('name')"
+              [attr.aria-describedby]="showError('name') ? 'nameError' : null"
+              [class]="fieldClass('name')"
+            />
+            @if (showError('name')) {
+              <p id="nameError" class="mt-1 text-sm text-red-600">Name is required (2-200 characters).</p>
+            }
+          </div>
+
+          <div class="md:col-span-2">
+            <label for="description" class="block text-sm font-medium text-slate-700">Description</label>
+            <textarea
+              id="description"
+              formControlName="description"
+              rows="3"
+              maxlength="2000"
+              [class]="fieldClass('description')"
+            ></textarea>
+            @if (form.controls.description.touched && form.controls.description.errors?.['maxlength']) {
+              <p class="mt-1 text-sm text-red-600">Description must be 2000 characters or fewer.</p>
+            }
+          </div>
+
+          <div>
+            <label for="sku" class="block text-sm font-medium text-slate-700">SKU</label>
+            <input
+              id="sku"
+              type="text"
+              formControlName="sku"
+              maxlength="100"
+              [class]="fieldClass('sku')"
+            />
+          </div>
+
+          <div>
+            <label for="type" class="block text-sm font-medium text-slate-700">
+              Type <span class="text-red-500">*</span>
+            </label>
+            <select
+              id="type"
+              formControlName="type"
+              class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            >
+              <option value="PRODUCT">Product</option>
+              <option value="SERVICE">Service</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="unitPrice" class="block text-sm font-medium text-slate-700">
+              Unit Price <span class="text-red-500">*</span>
+            </label>
+            <input
+              id="unitPrice"
+              type="number"
+              min="0"
+              step="0.01"
+              formControlName="unitPrice"
+              [attr.aria-invalid]="showError('unitPrice')"
+              [attr.aria-describedby]="showError('unitPrice') ? 'unitPriceError' : null"
+              [class]="fieldClass('unitPrice')"
+            />
+            @if (showError('unitPrice')) {
+              <p id="unitPriceError" class="mt-1 text-sm text-red-600">Unit price must be 0 or more.</p>
+            }
+          </div>
+
+          <div>
+            <label for="gstRate" class="block text-sm font-medium text-slate-700">GST Rate (%)</label>
+            <input
+              id="gstRate"
+              type="number"
+              min="0"
+              max="100"
+              step="0.01"
+              formControlName="gstRate"
+              [attr.aria-invalid]="showError('gstRate')"
+              [attr.aria-describedby]="showError('gstRate') ? 'gstRateError' : null"
+              [class]="fieldClass('gstRate')"
+            />
+            @if (showError('gstRate')) {
+              <p id="gstRateError" class="mt-1 text-sm text-red-600">GST rate must be between 0 and 100.</p>
+            }
+          </div>
         </div>
 
-        <div class="md:col-span-2">
-          <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
-          <textarea id="description" formControlName="description" rows="3" maxlength="2000" class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"></textarea>
-        </div>
-
-        <div>
-          <label for="sku" class="block text-sm font-medium text-gray-700">SKU</label>
-          <input id="sku" type="text" formControlName="sku" maxlength="100" class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-        </div>
-
-        <div>
-          <label for="type" class="block text-sm font-medium text-gray-700">Type *</label>
-          <select id="type" formControlName="type" class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
-            <option value="PRODUCT">Product</option>
-            <option value="SERVICE">Service</option>
-          </select>
-        </div>
-
-        <div>
-          <label for="unitPrice" class="block text-sm font-medium text-gray-700">Unit Price *</label>
-          <input id="unitPrice" type="number" min="0" step="0.01" formControlName="unitPrice" class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-          @if (form.controls.unitPrice.touched && form.controls.unitPrice.invalid) {
-            <p class="mt-1 text-sm text-red-600">Unit price must be 0 or more.</p>
-          }
-        </div>
-
-        <div>
-          <label for="gstRate" class="block text-sm font-medium text-gray-700">GST Rate (%)</label>
-          <input id="gstRate" type="number" min="0" max="100" step="0.01" formControlName="gstRate" class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-          @if (form.controls.gstRate.touched && form.controls.gstRate.invalid) {
-            <p class="mt-1 text-sm text-red-600">GST rate must be between 0 and 100.</p>
-          }
-        </div>
+        @if (formError()) {
+          <div
+            class="mt-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
+            role="alert"
+          >
+            <app-icon name="error" [size]="18" class="mt-0.5 shrink-0 text-red-600" />
+            <span>{{ formError() }}</span>
+          </div>
+        }
       </div>
 
-      @if (formError()) {
-        <div class="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{{ formError() }}</div>
-      }
-
-      <div class="flex items-center justify-end gap-2">
-        <button type="button" (click)="onCancel()" class="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">Cancel</button>
-        <button type="submit" [disabled]="form.invalid || submitting()" class="rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300">
+      <div class="flex items-center justify-end gap-2 border-t border-slate-100 px-5 py-4 sm:px-6">
+        <button
+          type="button"
+          (click)="onCancel()"
+          class="rounded-lg border border-slate-300 px-3.5 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 motion-reduce:transition-none"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          [disabled]="form.invalid || submitting()"
+          class="rounded-lg bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-indigo-300 motion-reduce:transition-none"
+        >
           {{ submitting() ? 'Saving...' : (isEdit ? 'Update Product' : 'Save Product') }}
         </button>
       </div>

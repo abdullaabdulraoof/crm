@@ -1,24 +1,21 @@
-<div class="min-h-dvh bg-gray-50">
-  <header class="border-b border-gray-200 bg-white">
-    <div class="mx-auto max-w-6xl px-4 py-4">
-      <h1 class="text-lg font-semibold text-gray-900">Reports</h1>
-      <p class="text-sm text-gray-500">Analyse leads, quotations, invoices, payments and follow-ups</p>
-      <nav class="mt-4 flex flex-wrap gap-2">
-        @for (tab of tabs; track tab.key) {
-          <button
-            type="button"
-            (click)="onTab(tab.key)"
-            class="rounded-md px-3 py-1.5 text-sm font-medium"
-            [class]="active() === tab.key ? 'bg-blue-600 text-white' : 'border border-gray-300 text-gray-700 hover:bg-gray-100'"
-          >
-            {{ tab.label }}
-          </button>
-        }
-      </nav>
-    </div>
-  </header>
-
-  <main class="mx-auto max-w-6xl px-4 py-6">
+<div>
+  <div class="mb-6">
+    <h1 class="text-xl font-semibold text-slate-900">Reports</h1>
+    <p class="text-sm text-slate-500">Analyse leads, quotations, invoices, payments and follow-ups</p>
+    <nav class="mt-4 flex flex-wrap gap-2" aria-label="Report type">
+      @for (tab of tabs; track tab.key) {
+        <button
+          type="button"
+          (click)="onTab(tab.key)"
+          [attr.aria-pressed]="active() === tab.key"
+          class="rounded-lg px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 motion-reduce:transition-none"
+          [class]="active() === tab.key ? 'bg-indigo-600 text-white' : 'border border-slate-300 text-slate-700 hover:bg-slate-100'"
+        >
+          {{ tab.label }}
+        </button>
+      }
+    </nav>
+  </div>
     @if (error()) {
       <div class="mb-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
         {{ error() }}
@@ -240,5 +237,4 @@
         </section>
       }
     }
-  </main>
 </div>

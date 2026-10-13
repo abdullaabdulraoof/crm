@@ -1,23 +1,19 @@
-<div class="min-h-dvh bg-gray-50">
-  <header class="border-b border-gray-200 bg-white">
-    <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-4">
-      <div>
-        <h1 class="text-lg font-semibold text-gray-900">Payments</h1>
-        <p class="text-sm text-gray-500">Record and track customer payments</p>
-      </div>
-      @if (canRecord()) {
-        <button
-          type="button"
-          (click)="onAdd()"
-          class="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
-        >
-          Record Payment
-        </button>
-      }
+<div>
+  <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h1 class="text-xl font-semibold text-slate-900">Payments</h1>
+      <p class="text-sm text-slate-500">Record and track customer payments</p>
     </div>
-  </header>
-
-  <main class="mx-auto max-w-6xl px-4 py-6">
+    @if (canRecord()) {
+      <button
+        type="button"
+        (click)="onAdd()"
+        class="inline-flex items-center rounded-lg bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 motion-reduce:transition-none"
+      >
+        Record Payment
+      </button>
+    }
+  </div>
     @if (success()) {
       <div class="mb-4 rounded-md bg-green-50 px-3 py-2 text-sm text-green-700" role="status">
         {{ success() }}
@@ -227,8 +223,6 @@
         </div>
       }
     </div>
-  </main>
-
   @if (showForm()) {
     <app-payment-form
       [isOpen]="showForm()"

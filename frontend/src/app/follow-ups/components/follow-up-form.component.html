@@ -1,109 +1,218 @@
-<div class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 px-4">
-  <div class="w-full max-w-2xl rounded-lg bg-white shadow-xl">
-    <div class="flex items-center justify-between border-b px-6 py-4">
-      <h2 class="text-lg font-semibold text-gray-900">{{ isEdit ? 'Edit Follow-up' : 'Add Follow-up' }}</h2>
-      <button type="button" (click)="onCancel()" class="text-gray-500 hover:text-gray-700">Close</button>
+<div
+  class="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 sm:items-center sm:px-4"
+  (click)="onCancel()"
+>
+  <div
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="followUpFormTitle"
+    class="flex max-h-[92dvh] w-full max-w-2xl flex-col rounded-t-2xl bg-white shadow-xl sm:rounded-2xl"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4 sm:px-6">
+      <h2 id="followUpFormTitle" class="text-lg font-semibold text-slate-900">
+        {{ isEdit ? 'Edit Follow-up' : 'Add Follow-up' }}
+      </h2>
+      <button
+        type="button"
+        (click)="onCancel()"
+        aria-label="Close dialog"
+        class="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 motion-reduce:transition-none"
+      >
+        <app-icon name="close" [size]="20" />
+      </button>
     </div>
 
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="space-y-4 px-6 py-4">
-      <div class="grid gap-4 md:grid-cols-2">
-        <div>
-          <label for="relatedType" class="block text-sm font-medium text-gray-700">Related To *</label>
-          <select id="relatedType" formControlName="relatedType" class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
-            <option value="LEAD">Lead</option>
-            <option value="CLIENT">Client</option>
-          </select>
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="flex min-h-0 flex-1 flex-col">
+      <div class="flex-1 overflow-y-auto px-5 py-5 sm:px-6">
+        <div class="grid gap-4 md:grid-cols-2">
+          <div>
+            <label for="relatedType" class="block text-sm font-medium text-slate-700">
+              Related To <span class="text-red-500">*</span>
+            </label>
+            <select
+              id="relatedType"
+              formControlName="relatedType"
+              class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            >
+              <option value="LEAD">Lead</option>
+              <option value="CLIENT">Client</option>
+            </select>
+          </div>
+
+          @if (form.controls.relatedType.value === 'LEAD') {
+            <div>
+              <label for="leadId" class="block text-sm font-medium text-slate-700">
+                Lead <span class="text-red-500">*</span>
+              </label>
+              <select
+                id="leadId"
+                formControlName="leadId"
+                [attr.aria-invalid]="showTargetError()"
+                [attr.aria-describedby]="showTargetError() ? 'targetError' : null"
+                [class]="fieldClass('leadId') + ' bg-white'"
+              >
+                <option value="">Select a lead</option>
+                @for (l of leads(); track l.id) {
+                  <option [value]="l.id">{{ l.name }}</option>
+                }
+              </select>
+            </div>
+          } @else {
+            <div>
+              <label for="clientId" class="block text-sm font-medium text-slate-700">
+                Client <span class="text-red-500">*</span>
+              </label>
+              <select
+                id="clientId"
+                formControlName="clientId"
+                [attr.aria-invalid]="showTargetError()"
+                [attr.aria-describedby]="showTargetError() ? 'targetError' : null"
+                [class]="fieldClass('clientId') + ' bg-white'"
+              >
+                <option value="">Select a client</option>
+                @for (c of clients(); track c.id) {
+                  <option [value]="c.id">{{ c.name }}</option>
+                }
+              </select>
+            </div>
+          }
+
+          <div>
+            <label for="assignedTo" class="block text-sm font-medium text-slate-700">
+              Assigned To <span class="text-red-500">*</span>
+            </label>
+            <select
+              id="assignedTo"
+              formControlName="assignedTo"
+              [attr.aria-invalid]="showError('assignedTo')"
+              [attr.aria-describedby]="showError('assignedTo') ? 'assignedToError' : null"
+              [class]="fieldClass('assignedTo') + ' bg-white'"
+            >
+              <option value="">Select a user</option>
+              @for (u of users(); track u.id) {
+                <option [value]="u.id">{{ u.name }}</option>
+              }
+            </select>
+            @if (showError('assignedTo')) {
+              <p id="assignedToError" class="mt-1 text-sm text-red-600">Assigned To is required.</p>
+            }
+          </div>
+
+          <div>
+            <label for="type" class="block text-sm font-medium text-slate-700">
+              Type <span class="text-red-500">*</span>
+            </label>
+            <select
+              id="type"
+              formControlName="type"
+              class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            >
+              <option value="CALL">Call</option>
+              <option value="MEETING">Meeting</option>
+              <option value="EMAIL">Email</option>
+              <option value="WHATSAPP">WhatsApp</option>
+              <option value="OTHER">Other</option>
+            </select>
+          </div>
+
+          <div class="md:col-span-2">
+            <label for="subject" class="block text-sm font-medium text-slate-700">
+              Subject <span class="text-red-500">*</span>
+            </label>
+            <input
+              id="subject"
+              type="text"
+              formControlName="subject"
+              maxlength="200"
+              [attr.aria-invalid]="showError('subject')"
+              [attr.aria-describedby]="showError('subject') ? 'subjectError' : null"
+              [class]="fieldClass('subject')"
+            />
+            @if (showError('subject')) {
+              <p id="subjectError" class="mt-1 text-sm text-red-600">
+                Subject is required (2-200 characters).
+              </p>
+            }
+          </div>
+
+          <div class="md:col-span-2">
+            <label for="description" class="block text-sm font-medium text-slate-700">Description</label>
+            <textarea
+              id="description"
+              formControlName="description"
+              rows="3"
+              maxlength="2000"
+              [class]="fieldClass('description')"
+            ></textarea>
+            @if (form.controls.description.touched && form.controls.description.errors?.['maxlength']) {
+              <p class="mt-1 text-sm text-red-600">Description must be 2000 characters or fewer.</p>
+            }
+          </div>
+
+          <div>
+            <label for="dueAt" class="block text-sm font-medium text-slate-700">
+              Due Date &amp; Time <span class="text-red-500">*</span>
+            </label>
+            <input
+              id="dueAt"
+              type="datetime-local"
+              formControlName="dueAt"
+              [attr.aria-invalid]="showError('dueAt')"
+              [attr.aria-describedby]="showError('dueAt') ? 'dueAtError' : null"
+              [class]="fieldClass('dueAt')"
+            />
+            @if (showError('dueAt')) {
+              <p id="dueAtError" class="mt-1 text-sm text-red-600">Due date and time is required.</p>
+            }
+          </div>
+
+          @if (isEdit) {
+            <div>
+              <label for="status" class="block text-sm font-medium text-slate-700">Status</label>
+              <select
+                id="status"
+                formControlName="status"
+                class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              >
+                <option value="PENDING">Pending</option>
+                <option value="COMPLETED">Completed</option>
+                <option value="CANCELLED">Cancelled</option>
+              </select>
+            </div>
+          }
         </div>
 
-        @if (form.controls.relatedType.value === 'LEAD') {
-          <div>
-            <label for="leadId" class="block text-sm font-medium text-gray-700">Lead *</label>
-            <select id="leadId" formControlName="leadId" class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
-              <option value="">Select a lead</option>
-              @for (l of leads(); track l.id) {
-                <option [value]="l.id">{{ l.name }}</option>
-              }
-            </select>
-          </div>
-        } @else {
-          <div>
-            <label for="clientId" class="block text-sm font-medium text-gray-700">Client *</label>
-            <select id="clientId" formControlName="clientId" class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
-              <option value="">Select a client</option>
-              @for (c of clients(); track c.id) {
-                <option [value]="c.id">{{ c.name }}</option>
-              }
-            </select>
-          </div>
+        @if (showTargetError()) {
+          <p id="targetError" class="mt-2 text-sm text-red-600">
+            Select a lead or client to relate this follow-up to.
+          </p>
         }
 
-        <div>
-          <label for="assignedTo" class="block text-sm font-medium text-gray-700">Assigned To *</label>
-          <select id="assignedTo" formControlName="assignedTo" class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
-            <option value="">Select a user</option>
-            @for (u of users(); track u.id) {
-              <option [value]="u.id">{{ u.name }}</option>
-            }
-          </select>
-          @if (form.controls.assignedTo.touched && !form.controls.assignedTo.value) {
-            <p class="mt-1 text-sm text-red-600">Assigned To is required.</p>
-          }
-        </div>
-
-        <div>
-          <label for="type" class="block text-sm font-medium text-gray-700">Type *</label>
-          <select id="type" formControlName="type" class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
-            <option value="CALL">Call</option>
-            <option value="MEETING">Meeting</option>
-            <option value="EMAIL">Email</option>
-            <option value="WHATSAPP">WhatsApp</option>
-            <option value="OTHER">Other</option>
-          </select>
-        </div>
-
-        <div class="md:col-span-2">
-          <label for="subject" class="block text-sm font-medium text-gray-700">Subject *</label>
-          <input id="subject" type="text" formControlName="subject" maxlength="200" class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-          @if (form.controls.subject.touched && form.controls.subject.invalid) {
-            <p class="mt-1 text-sm text-red-600">Subject is required (2-200 characters).</p>
-          }
-        </div>
-
-        <div class="md:col-span-2">
-          <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
-          <textarea id="description" formControlName="description" rows="3" maxlength="2000" class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"></textarea>
-          @if (form.controls.description.touched && form.controls.description.errors?.['maxlength']) {
-            <p class="mt-1 text-sm text-red-600">Description must be 2000 characters or fewer.</p>
-          }
-        </div>
-
-        <div>
-          <label for="dueAt" class="block text-sm font-medium text-gray-700">Due Date &amp; Time *</label>
-          <input id="dueAt" type="datetime-local" formControlName="dueAt" class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-          @if (form.controls.dueAt.touched && form.controls.dueAt.invalid) {
-            <p class="mt-1 text-sm text-red-600">Due date and time is required.</p>
-          }
-        </div>
-
-        @if (isEdit) {
-          <div>
-            <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
-            <select id="status" formControlName="status" class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
-              <option value="PENDING">Pending</option>
-              <option value="COMPLETED">Completed</option>
-              <option value="CANCELLED">Cancelled</option>
-            </select>
+        @if (formError()) {
+          <div
+            class="mt-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
+            role="alert"
+          >
+            <app-icon name="error" [size]="18" class="mt-0.5 shrink-0 text-red-600" />
+            <span>{{ formError() }}</span>
           </div>
         }
       </div>
 
-      @if (formError()) {
-        <div class="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{{ formError() }}</div>
-      }
-
-      <div class="flex items-center justify-end gap-2">
-        <button type="button" (click)="onCancel()" class="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">Cancel</button>
-        <button type="submit" [disabled]="form.invalid || submitting()" class="rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300">
+      <div class="flex items-center justify-end gap-2 border-t border-slate-100 px-5 py-4 sm:px-6">
+        <button
+          type="button"
+          (click)="onCancel()"
+          class="rounded-lg border border-slate-300 px-3.5 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 motion-reduce:transition-none"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          [disabled]="form.invalid || submitting()"
+          class="rounded-lg bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-indigo-300 motion-reduce:transition-none"
+        >
           {{ submitting() ? 'Saving...' : (isEdit ? 'Update Follow-up' : 'Save Follow-up') }}
         </button>
       </div>

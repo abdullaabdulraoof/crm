@@ -56,8 +56,23 @@ export interface FollowUpListParams {
   status?: string;
   type?: string;
   assignedTo?: string;
+  leadId?: string;
+  clientId?: string;
   from?: string;
   to?: string;
+}
+
+export interface FollowUpSummary {
+  total: number;
+  pending: number;
+  completed: number;
+  cancelled: number;
+  overdue: number;
+}
+
+export interface FollowUpSummaryResponse {
+  success: boolean;
+  data: FollowUpSummary;
 }
 
 export interface FollowUpFormData {

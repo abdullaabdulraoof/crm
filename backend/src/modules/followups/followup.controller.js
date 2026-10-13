@@ -14,6 +14,11 @@ const list = async (req, res) => {
   res.status(200).json({ success: true, data: followups, pagination });
 };
 
+const summary = async (req, res) => {
+  const data = await service.getFollowUpSummary(req.user);
+  res.status(200).json({ success: true, data });
+};
+
 const getOne = async (req, res) => {
   const followup = await service.getFollowup(req.user, req.params.id);
   res.status(200).json({ success: true, data: { followup } });
@@ -39,4 +44,4 @@ const remove = async (req, res) => {
   });
 };
 
-module.exports = { create, list, getOne, update, remove };
+module.exports = { create, list, summary, getOne, update, remove };

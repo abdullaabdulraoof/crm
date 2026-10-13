@@ -162,4 +162,34 @@ describe('ProductFormComponent', () => {
     component.onCancel();
     expect(cancelled).toBe(true);
   });
+
+  it('emits cancelled on the Escape key', () => {
+    let cancelled = false;
+    component.cancelled.subscribe(() => (cancelled = true));
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(cancelled).toBe(true);
+  });
+
+  it('does not close on Escape while a save is in flight', () => {
+    let cancelled = false;
+    component.cancelled.subscribe(() => (cancelled = true));
+
+    component.form.patchValue({ name: 'Widget', unitPrice: 10 });
+    component.onSubmit();
+    const req = httpMock.expectOne('/api/products');
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(cancelled).toBe(false);
+
+    req.flush({ success: true, data: { product: PRODUCT } });
+  });
+
+  it('flags invalid fields through the shared field class and error helper', () => {
+    expect(component.showError('name')).toBe(false);
+    component.form.controls.name.markAsTouched();
+    expect(component.showError('name')).toBe(true);
+    expect(component.fieldClass('name')).toContain('border-red-300');
+    expect(component.fieldClass('sku')).toContain('border-slate-300');
+  });
 });

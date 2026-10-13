@@ -3,9 +3,23 @@ const User = require("../user/user.model");
 const Client = require("../client/client.model");
 const AppError = require("../../common/error/AppError");
 const { LEAD_EDIT_ROLES, LEAD_DELETE_ROLES } = require("../../common/constants");
-const { parseId, scopedQuery, findByCompanyOr404 } = require("../../common/utils/scope");
+const {
+  parseId,
+  scopedQuery,
+  companyObjectId,
+  findByCompanyOr404,
+} = require("../../common/utils/scope");
+const {
+  parseSearch,
+  searchRegex,
+  parseEnumFilter,
+  parseIdFilter,
+  parseDateBounds,
+  rangeFilter,
+} = require("../../common/utils/query");
 const { normalizeEmail, normalizeString } = require("../../common/utils/normalize");
 const { recordUserActivity } = require("../activity-logs/activityLog.service");
+const { LEAD_SOURCES, LEAD_STATUSES } = require("./lead.validation");
 const { toLeadView } = require("./lead.util");
 
 const LEAD_NOT_FOUND = "Lead not found";
@@ -121,9 +135,36 @@ const createLead = async (actor, input, { ipAddress } = {}) => {
   return toLeadView(lead);
 };
 
+// Builds the optional company-scoped filter from the documented query params.
+// Values are validated/escaped by the shared query utils so bad input is a 400,
+// never an unbounded regex or an unescaped injection.
+const buildListFilter = (actor, query = {}) => {
+  const filter = scopedQuery(actor.companyId);
+
+  const search = parseSearch(query.search);
+  if (search) {
+    const regex = searchRegex(search);
+    filter.$or = [{ name: regex }, { email: regex }, { phoneNumber: regex }];
+  }
+
+  const status = parseEnumFilter(query.status, LEAD_STATUSES, "status");
+  if (status) filter.status = status;
+
+  const source = parseEnumFilter(query.source, LEAD_SOURCES, "source");
+  if (source) filter.source = source;
+
+  const assignedTo = parseIdFilter(query.assignedTo, "assignedTo");
+  if (assignedTo) filter.assignedTo = assignedTo;
+
+  const createdRange = rangeFilter("createdAt", parseDateBounds(query));
+  if (createdRange) filter.createdAt = createdRange.createdAt;
+
+  return filter;
+};
+
 const listLeads = async (actor, query = {}) => {
   const { page, limit } = parsePagination(query);
-  const filter = scopedQuery(actor.companyId);
+  const filter = buildListFilter(actor, query);
 
   const [total, leads] = await Promise.all([
     Lead.countDocuments(filter),
@@ -143,6 +184,36 @@ const listLeads = async (actor, query = {}) => {
       total,
       totalPages: total === 0 ? 0 : Math.ceil(total / limit),
     },
+  };
+};
+
+const toStatusMap = (rows) => {
+  const map = LEAD_STATUSES.reduce((acc, key) => ({ ...acc, [key]: 0 }), {});
+  for (const row of rows) {
+    if (row._id && Object.prototype.hasOwnProperty.call(map, row._id)) {
+      map[row._id] = row.count;
+    }
+  }
+  return map;
+};
+
+// Company-wide lead counters for the Leads page summary cards. Aggregated over
+// the whole company (never the current pagination page).
+const getLeadSummary = async (actor) => {
+  const rows = await Lead.aggregate([
+    { $match: { companyId: companyObjectId(actor) } },
+    { $group: { _id: "$status", count: { $sum: 1 } } },
+  ]);
+
+  const byStatus = toStatusMap(rows);
+  const total = LEAD_STATUSES.reduce((sum, key) => sum + byStatus[key], 0);
+
+  return {
+    total,
+    new: byStatus.NEW,
+    qualified: byStatus.QUALIFIED,
+    won: byStatus.WON,
+    byStatus,
   };
 };
 
@@ -253,6 +324,7 @@ const deleteLead = async (actor, id, { ipAddress } = {}) => {
 module.exports = {
   createLead,
   listLeads,
+  getLeadSummary,
   getLead,
   updateLead,
   deleteLead,

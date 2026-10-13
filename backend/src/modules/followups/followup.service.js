@@ -4,8 +4,14 @@ const Client = require("../client/client.model");
 const User = require("../user/user.model");
 const AppError = require("../../common/error/AppError");
 const { FOLLOWUP_EDIT_ROLES, FOLLOWUP_DELETE_ROLES } = require("../../common/constants");
-const { parseId, scopedQuery, findByCompanyOr404 } = require("../../common/utils/scope");
+const {
+  parseId,
+  scopedQuery,
+  findByCompanyOr404,
+  companyObjectId,
+} = require("../../common/utils/scope");
 const { normalizeString } = require("../../common/utils/normalize");
+const { parseSearch, searchRegex } = require("../../common/utils/query");
 const { recordUserActivity } = require("../activity-logs/activityLog.service");
 const { toFollowUpView } = require("./followup.util");
 
@@ -199,6 +205,12 @@ const listFollowups = async (actor, query = {}) => {
 
   const filter = scopedQuery(actor.companyId);
 
+  const search = parseSearch(query.search);
+  if (search) {
+    const regex = searchRegex(search);
+    filter.$or = [{ subject: regex }, { description: regex }];
+  }
+
   const status = parseEnumFilter(query.status, "status", ["PENDING", "COMPLETED", "CANCELLED"]);
   if (status) filter.status = status;
 
@@ -247,6 +259,42 @@ const listFollowups = async (actor, query = {}) => {
       total,
       totalPages: total === 0 ? 0 : Math.ceil(total / limit),
     },
+  };
+};
+
+// Company-wide follow-up counters for the Follow-ups page summary cards.
+// Aggregated over the whole company (never the current pagination page).
+// Overdue is derived here, never stored: PENDING and dueAt in the past.
+const getFollowUpSummary = async (actor) => {
+  const now = new Date();
+  const [row] = await FollowUp.aggregate([
+    { $match: { companyId: companyObjectId(actor) } },
+    {
+      $group: {
+        _id: null,
+        total: { $sum: 1 },
+        pending: { $sum: { $cond: [{ $eq: ["$status", "PENDING"] }, 1, 0] } },
+        completed: { $sum: { $cond: [{ $eq: ["$status", "COMPLETED"] }, 1, 0] } },
+        cancelled: { $sum: { $cond: [{ $eq: ["$status", "CANCELLED"] }, 1, 0] } },
+        overdue: {
+          $sum: {
+            $cond: [
+              { $and: [{ $eq: ["$status", "PENDING"] }, { $lt: ["$dueAt", now] }] },
+              1,
+              0,
+            ],
+          },
+        },
+      },
+    },
+  ]);
+
+  return {
+    total: row ? row.total : 0,
+    pending: row ? row.pending : 0,
+    completed: row ? row.completed : 0,
+    cancelled: row ? row.cancelled : 0,
+    overdue: row ? row.overdue : 0,
   };
 };
 
@@ -388,6 +436,7 @@ const deleteFollowup = async (actor, id, { ipAddress } = {}) => {
 module.exports = {
   createFollowup,
   listFollowups,
+  getFollowUpSummary,
   getFollowup,
   updateFollowup,
   deleteFollowup,

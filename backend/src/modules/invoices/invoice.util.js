@@ -40,6 +40,18 @@ const computeOverdue = (doc) => {
   return new Date(doc.dueDate).getTime() < Date.now();
 };
 
+// Aggregation expression that mirrors computeOverdue, so dashboards and reports
+// can split an invoice into an OVERDUE bucket inside a single $group instead of
+// persisting a derived status. `now` is injected for deterministic tests.
+const overdueCondition = (now = new Date()) => ({
+  $and: [
+    { $in: ["$status", ["ISSUED", "PARTIALLY_PAID"]] },
+    { $ne: [{ $ifNull: ["$dueDate", null] }, null] },
+    { $gt: ["$balanceDue", 0] },
+    { $lt: ["$dueDate", now] },
+  ],
+});
+
 // API view for an invoice. Item fields are snapshots taken at write time - they
 // never change when the referenced product changes later. `status` is the
 // stored lifecycle status; `effectiveStatus` adds the derived OVERDUE value for
@@ -84,4 +96,4 @@ const toInvoiceView = (doc) => {
   };
 };
 
-module.exports = { toInvoiceView, computeOverdue, round2 };
+module.exports = { toInvoiceView, computeOverdue, overdueCondition, round2 };

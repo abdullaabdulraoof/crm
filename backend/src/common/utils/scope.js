@@ -20,6 +20,10 @@ const parseId = (value, field = "id") => {
 // Always scope filters with the authenticated company id. Never take it from the request.
 const scopedQuery = (companyId, filter = {}) => ({ ...filter, companyId });
 
+// Aggregate pipelines bypass Mongoose casting, so company-scoped $match stages
+// need a real ObjectId. Built from the authenticated actor, never the request.
+const companyObjectId = (actor) => new Types.ObjectId(actor.companyId);
+
 // Company-owned resource lookup: both the resource id and the company id must match.
 // Missing or cross-company records both yield the same 404 so existence is not leaked.
 async function findByCompanyOr404(Model, companyId, id, filter = {}, message = "Resource not found") {
@@ -40,6 +44,7 @@ module.exports = {
   isObjectId,
   parseId,
   scopedQuery,
+  companyObjectId,
   findByCompanyOr404,
   assertSameCompany,
 };

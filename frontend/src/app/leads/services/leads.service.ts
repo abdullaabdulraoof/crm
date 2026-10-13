@@ -2,7 +2,14 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { Lead, LeadFormData, LeadListParams, LeadResponse, LeadsListResponse } from '../leads.types';
+import {
+  Lead,
+  LeadFormData,
+  LeadListParams,
+  LeadResponse,
+  LeadSummaryResponse,
+  LeadsListResponse,
+} from '../leads.types';
 
 @Injectable({ providedIn: 'root' })
 export class LeadsService {
@@ -10,6 +17,10 @@ export class LeadsService {
 
   getLeads(params: LeadListParams = {}): Observable<LeadsListResponse> {
     return this.http.get<LeadsListResponse>('/api/leads', { params: toHttpParams(params) });
+  }
+
+  getLeadSummary(): Observable<LeadSummaryResponse> {
+    return this.http.get<LeadSummaryResponse>('/api/leads/summary');
   }
 
   getLead(id: string): Observable<LeadResponse> {

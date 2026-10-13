@@ -1,0 +1,117 @@
+<header class="sticky top-0 z-20 border-b border-slate-200 bg-white/85 backdrop-blur">
+  <div class="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
+    <button
+      type="button"
+      class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 lg:hidden"
+      (click)="toggleMenu.emit()"
+      aria-label="Open navigation menu"
+      aria-controls="app-sidebar"
+    >
+      <app-icon name="menu" [size]="22" />
+    </button>
+
+    <h1 class="truncate text-base font-semibold text-slate-900 sm:text-lg">
+      {{ title() }}
+    </h1>
+
+    <div class="ml-auto flex items-center gap-2">
+      <div class="relative" data-user-menu>
+        <button
+          #userMenuButton
+          type="button"
+          class="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 motion-reduce:transition-none"
+          (click)="toggleUserMenu()"
+          [attr.aria-expanded]="menuOpen()"
+          aria-haspopup="menu"
+          aria-label="Open user menu"
+        >
+          <span
+            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-semibold text-white"
+            aria-hidden="true"
+          >
+            {{ initials() }}
+          </span>
+          <span class="hidden min-w-0 text-left sm:block">
+            <span class="block max-w-[12rem] truncate text-sm font-medium text-slate-900">
+              {{ user()?.name || 'Account' }}
+            </span>
+            @if (roleLabel()) {
+              <span class="block text-xs text-slate-500">{{ roleLabel() }}</span>
+            }
+          </span>
+          <app-icon name="chevron-down" [size]="16" class="hidden text-slate-400 sm:block" />
+        </button>
+
+        @if (menuOpen()) {
+          <div
+            class="absolute right-0 z-30 mt-2 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg"
+            role="menu"
+          >
+            <div class="border-b border-slate-100 px-4 py-3">
+              <p class="truncate text-sm font-medium text-slate-900">{{ user()?.name || 'Account' }}</p>
+              @if (roleLabel()) {
+                <p class="text-xs text-slate-500">{{ roleLabel() }}</p>
+              }
+            </div>
+            <button
+              type="button"
+              role="menuitem"
+              class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500"
+              (click)="requestLogout()"
+            >
+              <app-icon name="logout" [size]="18" />
+              Logout
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</header>
+
+@if (confirmingLogout()) {
+  <div
+    class="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 sm:items-center sm:px-4"
+    (click)="cancelLogout()"
+  >
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="logoutDialogTitle"
+      aria-describedby="logoutDialogMessage"
+      class="w-full max-w-md rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl sm:p-6"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="flex items-start gap-3">
+        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-600">
+          <app-icon name="logout" [size]="20" />
+        </span>
+        <div class="min-w-0">
+          <h2 id="logoutDialogTitle" class="text-lg font-semibold text-slate-900">Log out?</h2>
+          <p id="logoutDialogMessage" class="mt-1 text-sm text-slate-600">
+            Are you sure you want to log out of your account?
+          </p>
+        </div>
+      </div>
+      <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <button
+          #logoutCancel
+          type="button"
+          [disabled]="loggingOut()"
+          (click)="cancelLogout()"
+          class="inline-flex justify-center rounded-lg border border-slate-300 px-3.5 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          [disabled]="loggingOut()"
+          (click)="confirmLogout()"
+          class="inline-flex justify-center rounded-lg bg-red-600 px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-red-300 motion-reduce:transition-none"
+        >
+          {{ loggingOut() ? 'Logging out…' : 'Confirm Logout' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

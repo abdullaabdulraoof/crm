@@ -30,6 +30,11 @@ const LIST_RESPONSE = {
   pagination: { page: 1, limit: 10, total: 1, totalPages: 1 },
 };
 
+const SUMMARY_RESPONSE = {
+  success: true,
+  data: { total: 1, new: 1, qualified: 0, won: 0, byStatus: { NEW: 1 } },
+};
+
 function seedUser(role: string): void {
   localStorage.setItem('crm.auth.token', 'jwt-token');
   localStorage.setItem(
@@ -62,6 +67,7 @@ describe('LeadsPageComponent', () => {
     fixture.detectChanges();
     httpMock.expectOne('/api/leads?page=1&limit=10').flush(LIST_RESPONSE);
     httpMock.expectOne('/api/users/options').flush({ success: true, data: { users: [] } });
+    httpMock.expectOne('/api/leads/summary').flush(SUMMARY_RESPONSE);
     fixture.detectChanges();
   }
 
@@ -105,6 +111,27 @@ describe('LeadsPageComponent', () => {
     httpMock.expectOne('/api/users/options').flush({ success: true, data: { users: [] } });
   });
 
+  it('opens the lead view from a View action and closes it', async () => {
+    await setup();
+    const viewBtn = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('button')
+    ).find((b) => b.textContent?.trim() === 'View') as HTMLButtonElement;
+
+    viewBtn.click();
+    fixture.detectChanges();
+
+    expect(component.viewing()?.id).toBe('lead-1');
+    const viewEl = fixture.nativeElement.querySelector('app-lead-view') as HTMLElement | null;
+    expect(viewEl).toBeTruthy();
+    expect(viewEl?.textContent).toContain('Acme Corp');
+
+    component.onViewClosed();
+    fixture.detectChanges();
+
+    expect(component.viewing()).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-lead-view')).toBeNull();
+  });
+
   it('deletes a lead after confirmation and refreshes', async () => {
     await setup();
     vi.spyOn(window, 'confirm').mockReturnValue(true);
@@ -116,6 +143,7 @@ describe('LeadsPageComponent', () => {
     expect(req.request.method).toBe('DELETE');
     req.flush({ success: true, message: 'Lead deleted' });
     httpMock.expectOne('/api/leads?page=1&limit=10').flush(LIST_RESPONSE);
+    httpMock.expectOne('/api/leads/summary').flush(SUMMARY_RESPONSE);
     fixture.detectChanges();
 
     expect(component.success()).toBe('Lead deleted successfully.');
@@ -148,6 +176,7 @@ describe('LeadsPageComponent', () => {
       .expectOne('/api/leads?page=1&limit=10')
       .flush({ success: false }, { status: 500, statusText: 'Server Error' });
     httpMock.expectOne('/api/users/options').flush({ success: true, data: { users: [] } });
+    httpMock.expectOne('/api/leads/summary').flush(SUMMARY_RESPONSE);
     fixture.detectChanges();
 
     expect(component.error()).toBe('Something went wrong. Please try again.');

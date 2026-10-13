@@ -1,0 +1,16 @@
+<div class="flex min-h-dvh bg-slate-50">
+  <app-sidebar
+    [collapsed]="collapsed()"
+    [mobileOpen]="mobileOpen()"
+    (toggleCollapse)="toggleCollapse()"
+    (closeMobile)="mobileOpen.set(false)"
+  />
+
+  <div class="flex min-h-dvh min-w-0 flex-1 flex-col">
+    <app-navbar [title]="title()" (toggleMenu)="mobileOpen.set(!mobileOpen())" />
+
+    <main class="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
+      <router-outlet />
+    </main>
+  </div>
+</div>
