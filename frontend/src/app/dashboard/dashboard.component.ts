@@ -1,26 +1,66 @@
-﻿import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
+import { RouterLink } from '@angular/router';
 
+import { AuthService } from '../auth/auth.service';
+import { IconComponent } from '../layout/icon/icon.component';
 import { DashboardService } from './services/dashboard.service';
-import { ChartBar, DashboardSummary, MonthlyPayment } from './dashboard.types';
+import { ChartBar, DashboardSummary, RecentQuotation } from './dashboard.types';
+import { StatCardComponent } from './components/stat-card/stat-card.component';
+import { PanelComponent } from './components/panel/panel.component';
+import { StatusBadgeComponent } from './components/status-badge/status-badge.component';
+import { BarListComponent, BarTone } from './components/bar-list/bar-list.component';
+import { EmptyStateComponent } from './components/empty-state/empty-state.component';
+
+type Pipeline = 'leads' | 'quotations';
+
+const PIPELINE_TABS: ReadonlyArray<{ key: Pipeline; label: string }> = [
+  { key: 'leads', label: 'Leads' },
+  { key: 'quotations', label: 'Quotations' },
+];
 
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    CommonModule,
+    RouterLink,
+    StatCardComponent,
+    PanelComponent,
+    StatusBadgeComponent,
+    BarListComponent,
+    EmptyStateComponent,
+    IconComponent,
+  ],
   templateUrl: './dashboard.component.html',
+  styleUrl: './dashboard.component.css',
 })
 export class Dashboard implements OnInit {
   private readonly dashboardService = inject(DashboardService);
+  private readonly auth = inject(AuthService);
 
   readonly summary = signal<DashboardSummary | null>(null);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
 
-  readonly leadsBars = computed(() => this.toBars(this.summary()?.leadsByStatus));
-  readonly quotationBars = computed(() => this.toBars(this.summary()?.quotationsByStatus));
-  readonly invoiceBars = computed(() => this.toBars(this.summary()?.invoiceStatus));
-  readonly paymentBars = computed(() => this.toMonthlyBars(this.summary()?.monthlyPayments ?? []));
+  readonly pipeline = signal<Pipeline>('leads');
+  readonly pipelineTabs = PIPELINE_TABS;
+
+  readonly userName = computed(() => this.auth.user()?.name || '');
+
+  private readonly leadsBars = computed(() => this.toBars(this.summary()?.leadsByStatus));
+  private readonly quotationBars = computed(() =>
+    this.toBars(this.summary()?.quotationsByStatus)
+  );
+
+  readonly pipelineBars = computed(() =>
+    this.pipeline() === 'quotations' ? this.quotationBars() : this.leadsBars()
+  );
+
+  readonly pipelineTone = computed<BarTone>(() =>
+    this.pipeline() === 'quotations' ? 'indigo' : 'emerald'
+  );
 
   ngOnInit(): void {
     this.refresh();
@@ -41,84 +81,73 @@ export class Dashboard implements OnInit {
     });
   }
 
+  setPipeline(pipeline: Pipeline): void {
+    this.pipeline.set(pipeline);
+  }
+
   private friendly(err: HttpErrorResponse): string {
     const status = err?.status ?? 0;
-    if (status === 0) return 'Unable to reach the server. Please check your connection and try again.';
+    if (status === 0) {
+      return 'Unable to reach the server. Please check your connection and try again.';
+    }
     if (status === 401) return 'Unauthorized. Please login again.';
     if (status === 403) return 'You do not have permission to perform this action.';
     if (status >= 500) return 'Something went wrong. Please try again.';
     return err?.error?.error?.message || 'Something went wrong. Please try again.';
   }
 
-  private label(key: string): string {
+  private humanize(key: string): string {
     return key
       .split('_')
       .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
       .join(' ');
   }
 
-  private toBars(map: Record<string, number> | undefined): ChartBar[] {
-    const entries = Object.entries(map ?? {});
-    const max = Math.max(1, ...entries.map(([, value]) => value));
+  private toBars(counts: Record<string, number> | undefined): ChartBar[] {
+    const entries = Object.entries(counts ?? {});
+    const max = entries.reduce((peak, [, value]) => Math.max(peak, value), 0);
     return entries.map(([key, value]) => ({
       key,
-      label: this.label(key),
+      label: this.humanize(key),
       value,
-      width: `${Math.round((value / max) * 100)}%`,
+      width: `${max > 0 ? Math.round((value / max) * 100) : 0}%`,
     }));
   }
 
-  private toMonthlyBars(months: MonthlyPayment[]): ChartBar[] {
-    const max = Math.max(1, ...months.map((m) => m.total));
-    return months.map((m) => ({
-      key: m.month,
-      label: this.formatMonth(m.month),
-      value: m.total,
-      width: `${Math.round((m.total / max) * 100)}%`,
-    }));
+  customerName(quotation: RecentQuotation): string {
+    return quotation.client?.name || quotation.lead?.name || quotation.targetName || '-';
   }
 
-  formatMonth(key: string): string {
-    const [year, month] = key.split('-').map(Number);
-    if (!year || !month) return key;
-    const d = new Date(Date.UTC(year, month - 1, 1));
-    return d.toLocaleDateString(undefined, { month: 'short', year: 'numeric', timeZone: 'UTC' });
-  }
-
-  displayAmount(value: number): string {
-    return typeof value === 'number' ? value.toLocaleString() : String(value);
+  displayAmount(value: number | undefined | null): string {
+    return typeof value === 'number' ? value.toLocaleString() : '-';
   }
 
   formatDate(iso: string | null): string {
     if (!iso) return '-';
-    const d = new Date(iso);
-    return Number.isNaN(d.getTime()) ? '-' : d.toLocaleDateString();
+    const date = new Date(iso);
+    return Number.isNaN(date.getTime()) ? '-' : date.toLocaleDateString();
   }
 
-  statusClass(status: string): string {
-    switch (status) {
-      case 'PAID':
-      case 'WON':
-      case 'ACCEPTED':
-      case 'COMPLETED':
-        return 'bg-green-50 text-green-700 ring-green-200';
-      case 'OVERDUE':
-      case 'REJECTED':
-      case 'LOST':
-      case 'CANCELLED':
-        return 'bg-red-50 text-red-700 ring-red-200';
-      case 'PARTIALLY_PAID':
-        return 'bg-indigo-50 text-indigo-700 ring-indigo-200';
-      case 'ISSUED':
-      case 'SENT':
-      case 'PROPOSAL_SENT':
-        return 'bg-blue-50 text-blue-700 ring-blue-200';
-      default:
-        return 'bg-amber-50 text-amber-700 ring-amber-200';
-    }
+  formatDateTime(iso: string | null): string {
+    if (!iso) return '-';
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return '-';
+    return date.toLocaleString(undefined, {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   }
 
-  trackById(id: string): string {
-    return id;
+  isOverdue(iso: string | null): boolean {
+    if (!iso) return false;
+    const date = new Date(iso);
+    return !Number.isNaN(date.getTime()) && date.getTime() < Date.now();
+  }
+
+  trackById(_index: number, item: { id: string }): string {
+    return item.id;
   }
 }

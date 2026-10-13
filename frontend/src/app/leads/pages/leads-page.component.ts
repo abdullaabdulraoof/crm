@@ -1,6 +1,7 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
+import { ActivatedRoute } from '@angular/router';
 
 import { LeadsService } from '../services/leads.service';
 import { Lead, LeadSource, LeadStatus, LeadSummary } from '../leads.types';
@@ -57,6 +58,7 @@ const PAGE_SIZES = [10, 25, 50, 100];
 })
 export class LeadsPageComponent implements OnInit {
   private readonly leadsService = inject(LeadsService);
+  private readonly route = inject(ActivatedRoute);
   private readonly usersService = inject(UsersService);
   readonly auth = inject(AuthService);
 
@@ -98,6 +100,9 @@ export class LeadsPageComponent implements OnInit {
     this.loadAssignees();
     this.loadSummary();
     this.refresh();
+    if (this.route.snapshot.queryParamMap.get('new') === '1') {
+      this.onAdd();
+    }
   }
 
   private updatePermissions(): void {

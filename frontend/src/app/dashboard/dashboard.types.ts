@@ -102,3 +102,32 @@ export interface ChartBar {
   value: number;
   width: string;
 }
+
+export interface ActivityActor {
+  id: string;
+  name: string | null;
+  email: string | null;
+}
+
+export interface ActivityLog {
+  id: string;
+  action: string;
+  entityType: string;
+  entityId: string | null;
+  description: string;
+  metadata: Record<string, unknown>;
+  performedBy: ActivityActor | null;
+  ipAddress: string | null;
+  createdAt: string;
+}
+
+export interface ActivityLogListResponse {
+  success: boolean;
+  data: ActivityLog[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}

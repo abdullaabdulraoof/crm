@@ -28,4 +28,16 @@ describe('DashboardService', () => {
     expect(req.request.method).toBe('GET');
     req.flush({ success: true, data: { cards: { totalLeads: 0 } } });
   });
+
+  it('fetches recent activity with a limit', () => {
+    service.getRecentActivity().subscribe((res) => expect(res.data.length).toBe(0));
+
+    const req = httpMock.expectOne('/api/activity-logs?limit=5');
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      success: true,
+      data: [],
+      pagination: { page: 1, limit: 5, total: 0, totalPages: 0 },
+    });
+  });
 });

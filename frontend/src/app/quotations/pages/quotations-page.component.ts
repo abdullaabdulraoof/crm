@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
+import { ActivatedRoute } from '@angular/router';
 
 import { QuotationsService } from '../services/quotations.service';
 import { Quotation } from '../quotations.types';
@@ -26,6 +27,7 @@ const EMPTY_FILTERS: Filters = { search: '', status: '', from: '', to: '' };
 export class QuotationsPageComponent implements OnInit {
   private readonly quotationsService = inject(QuotationsService);
   readonly auth = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
 
   readonly quotations = signal<Quotation[]>([]);
   readonly loading = signal(false);
@@ -48,6 +50,9 @@ export class QuotationsPageComponent implements OnInit {
   ngOnInit(): void {
     this.updatePermissions();
     this.refresh();
+    if (this.route.snapshot.queryParamMap.get('new') === '1') {
+      this.onAdd();
+    }
   }
 
   private updatePermissions(): void {

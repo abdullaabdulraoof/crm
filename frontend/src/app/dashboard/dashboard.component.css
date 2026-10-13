@@ -1,0 +1,361 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.dashboard-shell {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+app-panel {
+  display: block;
+  min-width: 0;
+  min-height: 0;
+}
+
+.dashboard-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  min-width: 0;
+}
+
+.dashboard-eyebrow {
+  margin-bottom: 0.125rem;
+  color: #83a4ff;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1rem;
+  text-transform: uppercase;
+}
+
+.dashboard-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dashboard-action-primary,
+.dashboard-action-secondary {
+  display: inline-flex;
+  min-height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  white-space: nowrap;
+  border-radius: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1rem;
+}
+
+.dashboard-action-primary {
+  border: 1px solid #4f7fff;
+  background: #4f7fff;
+  color: white;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 8%);
+}
+
+.dashboard-action-primary:hover {
+  border-color: #3d6de8;
+  background: #3d6de8;
+}
+
+.dashboard-action-secondary {
+  border: 1px solid #383841;
+  background: #1c1c21;
+  color: #d4d4d8;
+}
+
+.dashboard-action-secondary:hover {
+  border-color: #4f7fff;
+  background: #202a42;
+  color: #a9beff;
+}
+
+.dashboard-action-primary:focus-visible,
+.dashboard-action-secondary:focus-visible {
+  outline: 2px solid #5d87ff;
+  outline-offset: 2px;
+}
+
+.dashboard-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border: 1px solid #fecdd3;
+  border-radius: 0.75rem;
+  background: #fff1f2;
+  padding: 0.5rem 0.75rem;
+  color: #be123c;
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.dashboard-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+app-stat-card {
+  display: block;
+  min-width: 0;
+}
+
+.dashboard-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.dashboard-recent {
+  min-width: 0;
+}
+
+/* Segmented chart-series control */
+.dashboard-segmented {
+  display: inline-flex;
+  gap: 0.125rem;
+  padding: 0.125rem;
+  border: 1px solid #303038;
+  border-radius: 0.5rem;
+  background: #141419;
+}
+
+.dashboard-segment {
+  border: 0;
+  border-radius: 0.375rem;
+  padding: 0.125rem 0.5rem;
+  background: transparent;
+  color: #92929e;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1rem;
+}
+
+.dashboard-segment:hover {
+  color: #f4f4f5;
+}
+
+.dashboard-segment-active {
+  background: #292930;
+  color: #f4f4f5;
+}
+
+.dashboard-segment:focus-visible {
+  outline: 2px solid #5d87ff;
+  outline-offset: 1px;
+}
+
+/* Financial summary */
+.dashboard-finance {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 1rem;
+}
+
+.dashboard-finance-item {
+  min-width: 0;
+}
+
+.dashboard-finance-item dt {
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: #92929e;
+}
+
+.dashboard-finance-item dd {
+  margin-top: 0.125rem;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.375rem;
+  color: #f4f4f5;
+}
+
+.dashboard-finance-emphasis {
+  color: #83a4ff !important;
+}
+
+.dashboard-finance-danger {
+  color: #fda4af !important;
+}
+
+.dashboard-finance-note {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: #92929e;
+}
+
+.dashboard-links {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #24242b;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.dashboard-links a,
+.dashboard-viewall {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: #83a4ff;
+}
+
+.dashboard-links a:hover,
+.dashboard-viewall:hover {
+  color: #a9beff;
+}
+
+/* Follow-ups */
+.dashboard-followups {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.dashboard-followups li {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.dashboard-due {
+  flex-shrink: 0;
+  border-radius: 9999px;
+  padding: 0.1875rem 0.4rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 0.875rem;
+  white-space: nowrap;
+}
+
+/* Recent quotations table */
+.dashboard-table-wrap {
+  overflow-x: auto;
+}
+
+.dashboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+  line-height: 1.125rem;
+}
+
+.dashboard-table th {
+  padding: 0 0.5rem 0.375rem 0;
+  text-align: left;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.dashboard-table td {
+  padding: 0.375rem 0.5rem 0.375rem 0;
+  border-top: 1px solid #24242b;
+}
+
+.dashboard-cell-strong {
+  font-weight: 600;
+  color: #f4f4f5;
+  white-space: nowrap;
+}
+
+.dashboard-col-date,
+.dashboard-col-amount {
+  white-space: nowrap;
+}
+
+.dashboard-col-amount {
+  text-align: right;
+}
+
+@media (min-width: 640px) {
+  .dashboard-summary {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Tablet: chart spans the row, finance and follow-ups sit side by side */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .dashboard-main {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-main > app-panel:first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 1280px) {
+  .dashboard-header {
+    flex-wrap: nowrap;
+    gap: 0.75rem;
+  }
+
+  .dashboard-actions {
+    flex-wrap: nowrap;
+    gap: 0.375rem;
+  }
+
+  .dashboard-action-primary,
+  .dashboard-action-secondary {
+    min-height: 2.125rem;
+    padding: 0.4375rem 0.625rem;
+    font-size: 0.6875rem;
+  }
+
+  .dashboard-main {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+/*
+ * Desktop single screen: lock the shell to the space left under the navbar and
+ * page padding (navbar 4rem + main py-6 3rem = 7rem) so the flexible middle row
+ * absorbs the slack and the page never scrolls. The min-height guard reverts to
+ * natural document flow on short screens so content is never clipped.
+ */
+@media (min-width: 1280px) and (min-height: 700px) {
+  .dashboard-shell {
+    height: calc(100dvh - 7.25rem);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    align-content: start;
+  }
+
+  .dashboard-main,
+  .dashboard-recent {
+    min-height: 0;
+  }
+}
+
+@media (min-width: 1280px) and (max-height: 800px) {
+  .dashboard-shell {
+    gap: 0.625rem;
+  }
+}
+
+@media (max-width: 639px) {
+  .dashboard-actions {
+    width: 100%;
+  }
+
+  .dashboard-action-primary,
+  .dashboard-action-secondary {
+    flex: 1 1 auto;
+  }
+}

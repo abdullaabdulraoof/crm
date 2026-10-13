@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
+import { ActivatedRoute } from '@angular/router';
 
 import { ClientsService } from '../clients.service';
 import { Client, ClientType } from '../clients.types';
@@ -33,7 +34,8 @@ const PAGE_SIZES = [10, 25, 50, 100];
 })
 export class ClientsPageComponent implements OnInit {
   private readonly clientsService = inject(ClientsService);
-  readonly auth = inject(AuthService);
+  private readonly auth = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
 
   readonly clients = signal<Client[]>([]);
   readonly loading = signal(false);
@@ -64,6 +66,9 @@ export class ClientsPageComponent implements OnInit {
   ngOnInit(): void {
     this.updatePermissions();
     this.refresh();
+    if (this.route.snapshot.queryParamMap.get('new') === '1') {
+      this.onAdd();
+    }
   }
 
   private updatePermissions(): void {

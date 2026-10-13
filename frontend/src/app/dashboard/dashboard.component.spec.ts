@@ -74,11 +74,11 @@ const SUMMARY: DashboardSummary = {
   },
 };
 
-function seedUser(): void {
+function seedUser(role = 'OWNER'): void {
   localStorage.setItem('crm.auth.token', 'jwt-token');
   localStorage.setItem(
     'crm.auth.user',
-    JSON.stringify({ id: 'u1', name: 'Tester', email: 't@x.com', role: 'OWNER' })
+    JSON.stringify({ id: 'u1', name: 'Tester', email: 't@x.com', role })
   );
 }
 
@@ -108,53 +108,73 @@ describe('Dashboard', () => {
     fixture.detectChanges();
   }
 
-  it('requests the summary and renders the cards', async () => {
+  it('requests the summary and renders the KPI cards', async () => {
     await setup();
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(component.summary()?.cards.totalLeads).toBe(6);
     expect(text).toContain('Total Leads');
-    expect(text).toContain('Quotations Sent');
-    expect(text).toContain('Outstanding Balance');
+    expect(text).toContain('New Leads');
+    expect(text).toContain('Total Clients');
+    expect(text).toContain('Outstanding Payment');
     expect(text).toContain('3,200');
   });
 
-  it('builds proportional chart bars from the status maps', async () => {
-    await setup();
-    const bars = component.leadsBars();
-    expect(bars.map((b) => b.key)).toEqual(['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL_SENT', 'WON', 'LOST']);
-    expect(bars.find((b) => b.key === 'NEW')?.width).toBe('100%');
-    expect(bars.find((b) => b.key === 'CONTACTED')?.width).toBe('50%');
-    expect(bars.find((b) => b.key === 'WON')?.width).toBe('0%');
-  });
-
-  it('labels the monthly payment chart', async () => {
-    await setup();
-    const bars = component.paymentBars();
-    expect(bars.length).toBe(6);
-    expect(bars[5].key).toBe('2026-10');
-    expect(bars[5].value).toBe(800);
-    expect(bars[5].width).toBe('100%');
-  });
-
-  it('renders the recent activity tables', async () => {
+  it('renders the pipeline chart, financial summary and recent quotations', async () => {
     await setup();
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(text).toContain('Zephyr Lead');
+    expect(text).toContain('Upcoming follow-ups');
+    expect(text).toContain('Financial summary');
+    expect(text).toContain('Outstanding balance');
+    expect(text).toContain('Recent quotations');
     expect(text).toContain('QT-2026-0001');
-    expect(text).toContain('INV-2026-0001');
-    expect(text).toContain('Call back');
+    expect(text).toContain('Zephyr Corp');
+    expect(text).not.toContain('Recent activity');
+    expect(text).not.toContain('Recent leads');
   });
 
-  it('shows empty-state copy when there is no activity', async () => {
-    await setup({
-      ...SUMMARY,
-      recent: { leads: [], quotations: [], invoices: [], followUps: [] },
-    });
+  it('switches the chart series between leads and quotations', async () => {
+    await setup();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(component.pipeline()).toBe('leads');
+    expect(el.textContent).toContain('Proposal Sent');
+    expect(el.textContent).not.toContain('Expired');
+
+    const tab = Array.from(el.querySelectorAll('button')).find(
+      (button) => (button.textContent ?? '').trim() === 'Quotations'
+    ) as HTMLButtonElement;
+    tab.click();
+    fixture.detectChanges();
+
+    expect(component.pipeline()).toBe('quotations');
+    expect(el.textContent).toContain('Expired');
+    expect(el.textContent).not.toContain('Proposal Sent');
+  });
+
+  it('wires the quick actions to the create forms', async () => {
+    await setup();
+    const links = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('a')
+    );
+    const href = (label: string): string | null | undefined =>
+      links.find((link) => (link.textContent ?? '').includes(label))?.getAttribute('href');
+
+    expect(href('Add Lead')).toBe('/leads?new=1');
+    expect(href('Add Client')).toBe('/clients?new=1');
+    expect(href('New Quotation')).toBe('/quotations?new=1');
+  });
+
+  it('renders follow-ups without loading recent activity', async () => {
+    await setup();
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(text).toContain('No recent leads.');
-    expect(text).toContain('No recent quotations.');
-    expect(text).toContain('No recent invoices.');
+    expect(text).toContain('Call back');
+    httpMock.expectNone('/api/activity-logs?limit=5');
+  });
+
+  it('shows empty-state copy when there are no follow-ups or quotations', async () => {
+    await setup({ ...SUMMARY, recent: { leads: [], quotations: [], invoices: [], followUps: [] } });
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('No pending follow-ups.');
+    expect(text).toContain('No quotations yet.');
   });
 
   it('surfaces a friendly error when the summary request fails', async () => {
@@ -170,7 +190,11 @@ describe('Dashboard', () => {
     fixture.detectChanges();
     httpMock
       .expectOne('/api/dashboard/summary')
-      .flush({ success: false, error: { message: 'boom' } }, { status: 500, statusText: 'Server Error' });
+      .flush(
+        { success: false, error: { message: 'boom' } },
+        { status: 500, statusText: 'Server Error' }
+      );
+    fixture.detectChanges();
 
     expect(component.error()).toBe('Something went wrong. Please try again.');
     expect(component.summary()).toBeNull();

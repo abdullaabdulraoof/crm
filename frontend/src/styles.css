@@ -1,3 +1,228 @@
 /* You can add global styles to this file, and also import other style files */
 
 @import 'tailwindcss';
+
+.crm-shell {
+  background: #111115;
+  color: #e4e4e7;
+}
+
+.crm-main {
+  background: #111115;
+}
+
+.crm-shell .app-topbar,
+.crm-shell aside.app-sidebar {
+  border-color: #28282f !important;
+  background-color: #09090d !important;
+  color: #e4e4e7;
+}
+
+.crm-shell .app-topbar h1,
+.crm-shell .app-sidebar .text-slate-900 {
+  color: #f4f4f5 !important;
+}
+
+.crm-shell .app-topbar .text-slate-500,
+.crm-shell .app-topbar .text-slate-400,
+.crm-shell .app-sidebar .text-slate-400 {
+  color: #92929e !important;
+}
+
+.crm-shell .app-sidebar .text-slate-600 {
+  color: #b0b0ba !important;
+}
+
+.crm-shell .app-sidebar a:hover {
+  background-color: #1b1b23 !important;
+  color: #f4f4f5 !important;
+}
+
+.crm-shell .app-sidebar a.bg-indigo-50 {
+  background-color: #182647 !important;
+  color: #9bb5ff !important;
+}
+
+.crm-shell .app-sidebar .border-slate-100,
+.crm-shell .app-sidebar .border-slate-200 {
+  border-color: #28282f !important;
+}
+
+.crm-shell .bg-white {
+  background-color: #1c1c21 !important;
+}
+
+.crm-shell .bg-white\/85 {
+  background-color: rgb(9 9 13 / 90%) !important;
+}
+
+.crm-shell .bg-slate-50,
+.crm-shell .bg-gray-50 {
+  background-color: #141419 !important;
+}
+
+.crm-shell .bg-slate-100,
+.crm-shell .bg-gray-100 {
+  background-color: #292930 !important;
+}
+
+.crm-shell .bg-slate-200,
+.crm-shell .bg-gray-200 {
+  background-color: #383841 !important;
+}
+
+.crm-shell .text-slate-900,
+.crm-shell .text-gray-900,
+.crm-shell .text-slate-800,
+.crm-shell .text-gray-800 {
+  color: #f4f4f5 !important;
+}
+
+.crm-shell .text-slate-700,
+.crm-shell .text-gray-700 {
+  color: #d4d4d8 !important;
+}
+
+.crm-shell .text-slate-600,
+.crm-shell .text-gray-600 {
+  color: #b4b4be !important;
+}
+
+.crm-shell .text-slate-500,
+.crm-shell .text-gray-500 {
+  color: #92929e !important;
+}
+
+.crm-shell .text-slate-400,
+.crm-shell .text-gray-400 {
+  color: #777782 !important;
+}
+
+.crm-shell .text-slate-300,
+.crm-shell .text-gray-300 {
+  color: #a1a1aa !important;
+}
+
+.crm-shell .border-slate-100,
+.crm-shell .border-gray-100 {
+  border-color: #24242b !important;
+}
+
+.crm-shell .border-slate-200,
+.crm-shell .border-gray-200 {
+  border-color: #303038 !important;
+}
+
+.crm-shell .border-slate-300,
+.crm-shell .border-gray-300 {
+  border-color: #41414b !important;
+}
+
+.crm-shell .divide-slate-100 > :not(:first-child),
+.crm-shell .divide-gray-100 > :not(:first-child) {
+  border-color: #292930 !important;
+}
+
+.crm-shell .divide-slate-200 > :not(:first-child),
+.crm-shell .divide-gray-200 > :not(:first-child) {
+  border-color: #34343d !important;
+}
+
+.crm-shell .bg-indigo-600,
+.crm-shell .bg-blue-600 {
+  background-color: #4f7fff !important;
+}
+
+.crm-shell .hover\:bg-indigo-700:hover,
+.crm-shell .hover\:bg-blue-700:hover {
+  background-color: #3d6de8 !important;
+}
+
+.crm-shell .text-indigo-600,
+.crm-shell .text-indigo-700,
+.crm-shell .text-blue-600,
+.crm-shell .text-blue-700,
+.crm-shell .text-emerald-600,
+.crm-shell .text-emerald-700 {
+  color: #83a4ff !important;
+}
+
+.crm-shell .border-indigo-500,
+.crm-shell .border-blue-500,
+.crm-shell .border-emerald-500 {
+  border-color: #5d87ff !important;
+}
+
+.crm-shell .bg-emerald-600 {
+  background-color: #4f7fff !important;
+}
+
+.crm-shell main table:not(.crm-print-table) {
+  color: #d4d4d8;
+}
+
+.crm-shell main table:not(.crm-print-table) thead {
+  background-color: #141419 !important;
+}
+
+.crm-shell main table:not(.crm-print-table) th {
+  color: #a1a1aa !important;
+}
+
+.crm-shell main table:not(.crm-print-table) tbody tr:hover {
+  background-color: #23232b !important;
+}
+
+.crm-shell .invoice-document {
+  border-radius: 0.375rem;
+  background: #fff !important;
+  color: #1f2937 !important;
+}
+
+.crm-shell .invoice-document .bg-slate-100 {
+  background-color: #f1f5f9 !important;
+}
+
+.crm-shell .invoice-document .border-slate-200,
+.crm-shell .invoice-document .border-slate-300 {
+  border-color: #cbd5e1 !important;
+}
+
+.crm-shell .invoice-document .text-slate-900,
+.crm-shell .invoice-document .text-slate-800 {
+  color: #1e293b !important;
+}
+
+.crm-shell .invoice-document .text-slate-700 {
+  color: #334155 !important;
+}
+
+.crm-shell .invoice-document .text-slate-600 {
+  color: #475569 !important;
+}
+
+.crm-shell .invoice-document .text-slate-500 {
+  color: #64748b !important;
+}
+
+.crm-shell .invoice-document .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+.crm-shell main input,
+.crm-shell main select,
+.crm-shell main textarea {
+  border-color: #3a3a44 !important;
+  background-color: #141419 !important;
+  color: #f4f4f5 !important;
+}
+
+.crm-shell main input::placeholder,
+.crm-shell main textarea::placeholder {
+  color: #777782 !important;
+}
+
+.crm-shell main option {
+  background-color: #1c1c21;
+  color: #f4f4f5;
+}
