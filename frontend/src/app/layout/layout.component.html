@@ -1,4 +1,4 @@
-<div class="crm-shell flex min-h-dvh bg-slate-50">
+<div class="crm-shell flex min-h-dvh bg-[#101014] text-[#F5F5F7]">
   <app-sidebar
     [collapsed]="collapsed()"
     [mobileOpen]="mobileOpen()"
@@ -6,10 +6,10 @@
     (closeMobile)="mobileOpen.set(false)"
   />
 
-  <div class="flex min-h-dvh min-w-0 flex-1 flex-col">
+  <div class="flex min-h-dvh min-w-0 flex-1 flex-col bg-[#101014]">
     <app-navbar [title]="title()" (toggleMenu)="mobileOpen.set(!mobileOpen())" />
 
-    <main class="crm-main mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
+    <main class="crm-main mx-auto w-full max-w-[1560px] flex-1 px-3 py-5 sm:px-6 lg:px-8 bg-[#101014]">
       <router-outlet />
     </main>
   </div>

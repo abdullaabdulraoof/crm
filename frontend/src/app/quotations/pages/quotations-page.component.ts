@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
@@ -8,6 +8,7 @@ import { Quotation } from '../quotations.types';
 import { QuotationFormComponent } from '../components/quotation-form.component';
 import { QuotationViewComponent } from '../components/quotation-view.component';
 import { AuthService } from '../../auth/auth.service';
+import { IconComponent } from '../../layout/icon/icon.component';
 
 interface Filters {
   search: string;
@@ -18,10 +19,18 @@ interface Filters {
 
 const EMPTY_FILTERS: Filters = { search: '', status: '', from: '', to: '' };
 
+const STATUS_OPTIONS = [
+  { value: 'DRAFT', label: 'Draft' },
+  { value: 'SENT', label: 'Sent' },
+  { value: 'ACCEPTED', label: 'Accepted' },
+  { value: 'REJECTED', label: 'Rejected' },
+  { value: 'EXPIRED', label: 'Expired' },
+];
+
 @Component({
   selector: 'app-quotations-page',
   standalone: true,
-  imports: [CommonModule, QuotationFormComponent, QuotationViewComponent],
+  imports: [CommonModule, QuotationFormComponent, QuotationViewComponent, IconComponent],
   templateUrl: './quotations-page.component.html',
 })
 export class QuotationsPageComponent implements OnInit {
@@ -43,9 +52,26 @@ export class QuotationsPageComponent implements OnInit {
   readonly viewing = signal<Quotation | null>(null);
   readonly busyId = signal<string | null>(null);
 
+  readonly statusOptions = STATUS_OPTIONS;
+  readonly showFilters = signal(false);
+  readonly selectedQuotationIds = signal<Set<string>>(new Set());
+
   // Frontend convenience only - the backend enforces the real permissions.
   readonly canEdit = signal(false);
   readonly canDelete = signal(false);
+
+  readonly rangeStart = computed(() => (this.total() === 0 ? 0 : (this.page() - 1) * this.limit + 1));
+  readonly rangeEnd = computed(() => Math.min(this.page() * this.limit, this.total()));
+
+  readonly activeChips = computed(() => {
+    const f = this.filters();
+    const chips: { key: keyof Filters; label: string; value: string }[] = [];
+    if (f.search) chips.push({ key: 'search', label: 'Search', value: f.search });
+    if (f.status) chips.push({ key: 'status', label: 'Status', value: f.status });
+    if (f.from) chips.push({ key: 'from', label: 'From', value: f.from });
+    if (f.to) chips.push({ key: 'to', label: 'To', value: f.to });
+    return chips;
+  });
 
   ngOnInit(): void {
     this.updatePermissions();
@@ -119,6 +145,12 @@ export class QuotationsPageComponent implements OnInit {
     this.refresh();
   }
 
+  removeFilter(key: keyof Filters): void {
+    this.filters.update((f) => ({ ...f, [key]: '' }));
+    this.page.set(1);
+    this.refresh();
+  }
+
   clearFilters(): void {
     this.filters.set({ ...EMPTY_FILTERS });
     this.page.set(1);
@@ -126,8 +158,33 @@ export class QuotationsPageComponent implements OnInit {
   }
 
   hasActiveFilters(): boolean {
-    const f = this.filters();
-    return !!(f.search || f.status || f.from || f.to);
+    return this.activeChips().length > 0;
+  }
+
+  toggleSelectAll(checked: boolean): void {
+    if (checked) {
+      this.selectedQuotationIds.set(new Set(this.quotations().map((q) => q.id)));
+    } else {
+      this.selectedQuotationIds.set(new Set());
+    }
+  }
+
+  toggleSelectQuotation(id: string): void {
+    this.selectedQuotationIds.update((set) => {
+      const next = new Set(set);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  isQuotationSelected(id: string): boolean {
+    return this.selectedQuotationIds().has(id);
+  }
+
+  isAllSelected(): boolean {
+    const list = this.quotations();
+    return list.length > 0 && list.every((q) => this.selectedQuotationIds().has(q.id));
   }
 
   onAdd(): void {
@@ -212,15 +269,16 @@ export class QuotationsPageComponent implements OnInit {
   statusClass(status: string): string {
     switch (status) {
       case 'ACCEPTED':
-        return 'bg-green-50 text-green-700 ring-green-200';
+        return 'crm-status-pill status-green';
       case 'REJECTED':
-        return 'bg-red-50 text-red-700 ring-red-200';
+        return 'crm-status-pill status-red';
       case 'EXPIRED':
-        return 'bg-gray-100 text-gray-600 ring-gray-200';
+        return 'crm-status-pill status-muted';
       case 'SENT':
-        return 'bg-blue-50 text-blue-700 ring-blue-200';
+        return 'crm-status-pill status-blue';
+      case 'DRAFT':
       default:
-        return 'bg-amber-50 text-amber-700 ring-amber-200';
+        return 'crm-status-pill status-amber';
     }
   }
 

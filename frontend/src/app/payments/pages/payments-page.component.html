@@ -1,245 +1,412 @@
-<div>
-  <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+<div class="space-y-5">
+  <!-- Page Header matching Reference Screen 2 -->
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
     <div>
-      <h1 class="text-xl font-semibold text-slate-900">Payments</h1>
-      <p class="text-sm text-slate-500">Record and track customer payments</p>
+      <h1 class="text-2xl font-extrabold text-[#F5F5F7] tracking-tight">Payments</h1>
+      <p class="text-xs text-[#92929D] mt-0.5">Track collected customer payments, transaction methods, and receipts.</p>
     </div>
     @if (canRecord()) {
-      <button
-        type="button"
-        (click)="onAdd()"
-        class="inline-flex items-center rounded-lg bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 motion-reduce:transition-none"
-      >
-        Record Payment
-      </button>
+      <div class="flex items-center gap-2.5">
+        <button
+          type="button"
+          (click)="onAdd()"
+          class="crm-btn-add"
+        >
+          <app-icon name="plus" [size]="15" />
+          <span>Record Payment</span>
+        </button>
+      </div>
     }
   </div>
-    @if (success()) {
-      <div class="mb-4 rounded-md bg-green-50 px-3 py-2 text-sm text-green-700" role="status">
-        {{ success() }}
-      </div>
-    }
-    @if (error()) {
-      <div class="mb-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
-        {{ error() }}
-      </div>
-    }
 
-    <div class="mb-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <div class="sm:col-span-2 lg:col-span-3">
-          <label for="filterSearch" class="block text-xs font-medium text-gray-500">Search (payment number or reference)</label>
-          <input
-            id="filterSearch"
-            type="search"
-            placeholder="Press Enter to search"
-            [value]="filters().search"
-            (keydown)="onSearchKeydown($event)"
-            class="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
+  <!-- Success & Error Alerts -->
+  @if (success()) {
+    <div
+      class="flex items-center gap-2 rounded-xl border border-[#77DD77]/30 bg-[#77DD77]/10 px-4 py-2.5 text-xs font-medium text-[#77DD77]"
+      role="status"
+    >
+      <app-icon name="success" [size]="16" class="shrink-0" />
+      <span>{{ success() }}</span>
+    </div>
+  }
+
+  @if (error() && payments().length > 0) {
+    <div
+      class="flex items-center gap-2 rounded-xl border border-[#FF6B6B]/30 bg-[#FF6B6B]/10 px-4 py-2.5 text-xs font-medium text-[#FF6B6B]"
+      role="alert"
+    >
+      <app-icon name="error" [size]="16" class="shrink-0" />
+      <span class="flex-1">{{ error() }}</span>
+      <button type="button" (click)="refresh()" class="font-bold underline cursor-pointer">Retry</button>
+    </div>
+  }
+
+  <!-- Toolbar matching Reference Screen 2 -->
+  <div class="flex flex-col gap-3 rounded-2xl border border-[#26262B] bg-[#1C1C20] p-3 shadow-md">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <!-- Search Input with Count Pill -->
+      <div class="relative flex-1 min-w-[240px] max-w-md">
+        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-[#92929D]">
+          <app-icon name="search" [size]="16" />
         </div>
-
-        <div>
-          <label for="filterInvoice" class="block text-xs font-medium text-gray-500">Invoice</label>
-          <select
-            id="filterInvoice"
-            [value]="filters().invoiceId"
-            (change)="onFilterChange('invoiceId', $any($event.target).value)"
-            class="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          >
-            <option value="">All invoices</option>
-            @for (inv of invoices(); track inv.id) {
-              <option [value]="inv.id">{{ inv.invoiceNumber }}</option>
-            }
-          </select>
-        </div>
-
-        <div>
-          <label for="filterClient" class="block text-xs font-medium text-gray-500">Client</label>
-          <select
-            id="filterClient"
-            [value]="filters().clientId"
-            (change)="onFilterChange('clientId', $any($event.target).value)"
-            class="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          >
-            <option value="">All clients</option>
-            @for (client of clients(); track client.id) {
-              <option [value]="client.id">{{ client.name }}</option>
-            }
-          </select>
-        </div>
-
-        <div>
-          <label for="filterMethod" class="block text-xs font-medium text-gray-500">Method</label>
-          <select
-            id="filterMethod"
-            [value]="filters().method"
-            (change)="onFilterChange('method', $any($event.target).value)"
-            class="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          >
-            <option value="">All methods</option>
-            @for (m of methods; track m) {
-              <option [value]="m">{{ methodLabels[m] }}</option>
-            }
-          </select>
-        </div>
-
-        <div>
-          <label for="filterStatus" class="block text-xs font-medium text-gray-500">Status</label>
-          <select
-            id="filterStatus"
-            [value]="filters().status"
-            (change)="onFilterChange('status', $any($event.target).value)"
-            class="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          >
-            <option value="">All</option>
-            <option value="RECORDED">Recorded</option>
-            <option value="VOIDED">Voided</option>
-            <option value="REFUNDED">Refunded</option>
-          </select>
-        </div>
-
-        <div>
-          <label for="filterFrom" class="block text-xs font-medium text-gray-500">Payment date from</label>
-          <input
-            id="filterFrom"
-            type="date"
-            [value]="filters().from"
-            (change)="onFilterChange('from', $any($event.target).value)"
-            class="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
-        </div>
-
-        <div>
-          <label for="filterTo" class="block text-xs font-medium text-gray-500">Payment date to</label>
-          <input
-            id="filterTo"
-            type="date"
-            [value]="filters().to"
-            (change)="onFilterChange('to', $any($event.target).value)"
-            class="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
+        <input
+          type="search"
+          placeholder="Search by payment reference, invoice #, client..."
+          [value]="filters().search"
+          (keydown)="onSearchKeydown($event)"
+          class="block w-full rounded-xl border border-[#26262B] bg-[#141419] py-2 pl-9 pr-24 text-xs text-[#F5F5F7] placeholder:text-[#6B6B78] focus:border-[#648BFF] focus:outline-none focus:ring-1 focus:ring-[#648BFF]"
+        />
+        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+          <span class="rounded-lg bg-[#222228] px-2 py-0.5 text-[10px] font-bold text-[#92929D]">
+            {{ total() }} payments
+          </span>
         </div>
       </div>
 
-      @if (hasActiveFilters()) {
-        <div class="mt-3">
+      <!-- Action Controls -->
+      <div class="flex items-center gap-2 ml-auto">
+        <!-- Status Filter -->
+        <select
+          [value]="filters().status"
+          (change)="onFilterChange('status', $any($event.target).value)"
+          class="rounded-lg border border-[#26262B] bg-[#141419] px-2.5 py-1.5 text-xs font-semibold text-[#F5F5F7] focus:border-[#648BFF] focus:outline-none"
+        >
+          <option value="">All Statuses</option>
+          @for (opt of statusOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+
+        <!-- Method Filter -->
+        <select
+          [value]="filters().method"
+          (change)="onFilterChange('method', $any($event.target).value)"
+          class="rounded-lg border border-[#26262B] bg-[#141419] px-2.5 py-1.5 text-xs font-semibold text-[#F5F5F7] focus:border-[#648BFF] focus:outline-none"
+        >
+          <option value="">All Methods</option>
+          @for (m of methods; track m) {
+            <option [value]="m">{{ methodLabel(m) }}</option>
+          }
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Active Filter Chips Row matching Reference Screen 2 -->
+  <div class="flex flex-wrap items-center justify-between gap-3 px-1">
+    <div class="flex flex-wrap items-center gap-2">
+      <div class="flex items-center gap-1.5 text-xs text-[#92929D] font-medium mr-1">
+        <app-icon name="filter" [size]="14" />
+        <span>Active Filters:</span>
+      </div>
+
+      @if (activeChips().length === 0) {
+        <span class="text-xs text-[#6B6B78] italic">None (showing all)</span>
+      } @else {
+        @for (chip of activeChips(); track chip.key) {
+          <span class="crm-chip">
+            <span class="text-[#92929D]">{{ chip.label }}:</span>
+            <span class="text-[#F5F5F7]">{{ chip.value }}</span>
+            <button
+              type="button"
+              class="crm-chip-close"
+              (click)="removeFilter(chip.key)"
+              aria-label="Remove filter"
+            >✕</button>
+          </span>
+        }
+        <button
+          type="button"
+          (click)="clearFilters()"
+          class="text-xs font-semibold text-[#648BFF] hover:underline cursor-pointer ml-1"
+        >
+          Clear all
+        </button>
+      }
+    </div>
+
+    <!-- Right Side Compact Pagination Indicator from Reference -->
+    <div class="flex items-center gap-2 text-xs font-semibold text-[#92929D]">
+      <span>{{ page() }} of {{ totalPages() }}</span>
+      <div class="flex items-center gap-1">
+        <button
+          type="button"
+          (click)="prevPage()"
+          [disabled]="page() <= 1"
+          class="flex h-7 w-7 items-center justify-center rounded-lg border border-[#26262B] bg-[#1C1C20] text-[#F5F5F7] hover:bg-[#25252B] disabled:opacity-30 disabled:cursor-not-allowed"
+          aria-label="Previous page"
+        >
+          <app-icon name="chevron-left" [size]="14" />
+        </button>
+        <button
+          type="button"
+          (click)="nextPage()"
+          [disabled]="page() >= totalPages()"
+          class="flex h-7 w-7 items-center justify-center rounded-lg border border-[#26262B] bg-[#1C1C20] text-[#F5F5F7] hover:bg-[#25252B] disabled:opacity-30 disabled:cursor-not-allowed"
+          aria-label="Next page"
+        >
+          <app-icon name="chevron-right" [size]="14" />
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data Table Card matching Reference Screen 2 -->
+  <div class="overflow-hidden rounded-2xl border border-[#26262B] bg-[#1C1C20] shadow-xl">
+    @if (loading()) {
+      <div class="divide-y divide-[#202026] p-4 space-y-3">
+        @for (i of [1, 2, 3, 4, 5]; track i) {
+          <div class="flex items-center gap-4 py-2">
+            <div class="h-4 w-4 rounded bg-[#24242A] animate-pulse"></div>
+            <div class="h-4 w-36 rounded bg-[#24242A] animate-pulse"></div>
+            <div class="h-4 w-28 rounded bg-[#24242A] animate-pulse"></div>
+            <div class="ml-auto h-6 w-20 rounded-full bg-[#24242A] animate-pulse"></div>
+          </div>
+        }
+      </div>
+    } @else if (error() && payments().length === 0) {
+      <div class="flex flex-col items-center gap-3 px-4 py-16 text-center">
+        <span class="flex h-12 w-12 items-center justify-center rounded-full bg-[#FF6B6B]/15 text-[#FF6B6B]">
+          <app-icon name="error" [size]="24" />
+        </span>
+        <p class="max-w-md text-sm text-[#92929D]">{{ error() }}</p>
+        <button
+          type="button"
+          (click)="refresh()"
+          class="crm-btn-secondary"
+        >
+          <app-icon name="retry" [size]="16" />
+          <span>Retry</span>
+        </button>
+      </div>
+    } @else if (payments().length === 0) {
+      <div class="flex flex-col items-center gap-3 px-4 py-16 text-center">
+        <span class="flex h-12 w-12 items-center justify-center rounded-full bg-[#24242E] text-[#648BFF]">
+          <app-icon name="payment" [size]="24" />
+        </span>
+        <div>
+          <p class="text-sm font-bold text-[#F5F5F7]">No payments recorded</p>
+          <p class="text-xs text-[#92929D] mt-1">
+            @if (hasActiveFilters()) {
+              Try adjusting your active filters.
+            } @else {
+              Record a payment receipt against an invoice.
+            }
+          </p>
+        </div>
+        @if (canRecord()) {
           <button
             type="button"
-            (click)="clearFilters()"
-            class="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
+            (click)="onAdd()"
+            class="crm-btn-add mt-2"
           >
-            Clear Filters
+            <app-icon name="plus" [size]="15" />
+            <span>Record Payment</span>
           </button>
-        </div>
-      }
-    </div>
+        }
+      </div>
+    } @else {
+      <!-- Desktop Table -->
+      <div class="hidden overflow-x-auto md:block">
+        <table class="w-full text-left">
+          <thead>
+            <tr class="bg-[#242428] text-[10px] font-bold uppercase tracking-wider text-[#92929D] border-b border-[#26262B]">
+              <th scope="col" class="w-10 px-4 py-3">
+                <input
+                  type="checkbox"
+                  [checked]="isAllSelected()"
+                  (change)="toggleSelectAll($any($event.target).checked)"
+                  aria-label="Select all payments"
+                />
+              </th>
+              <th scope="col" class="px-4 py-3">Reference / Number</th>
+              <th scope="col" class="px-4 py-3">Invoice</th>
+              <th scope="col" class="px-4 py-3">Client</th>
+              <th scope="col" class="px-4 py-3">Payment Date</th>
+              <th scope="col" class="px-4 py-3">Method</th>
+              <th scope="col" class="px-4 py-3">Status</th>
+              <th scope="col" class="px-4 py-3 text-right">Amount</th>
+              <th scope="col" class="px-4 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#202026]">
+            @for (p of payments(); track trackById(p.id)) {
+              <tr
+                class="hover:bg-[#222228] transition-colors"
+                [class.bg-[#1E1E26]]="isPaymentSelected(p.id)"
+              >
+                <!-- Checkbox -->
+                <td class="px-4 py-3.5">
+                  <input
+                    type="checkbox"
+                    [checked]="isPaymentSelected(p.id)"
+                    (change)="toggleSelectPayment(p.id)"
+                    [attr.aria-label]="'Select payment ' + p.paymentNumber"
+                  />
+                </td>
 
-    <div class="rounded-lg border border-gray-200 bg-white shadow-sm">
-      @if (loading()) {
-        <div class="px-4 py-6 text-sm text-gray-600">Loading payments...</div>
-      } @else if (payments().length === 0) {
-        <div class="flex flex-col items-center justify-center px-4 py-10 text-center">
-          <p class="text-sm text-gray-600">No payments found.</p>
-          @if (canRecord()) {
-            <button
-              type="button"
-              (click)="onAdd()"
-              class="mt-4 rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
-            >
-              Record Payment
-            </button>
-          }
-        </div>
-      } @else {
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200 text-sm">
-            <thead class="bg-gray-50">
-              <tr>
-                <th scope="col" class="px-4 py-3 text-left font-medium text-gray-700">Payment #</th>
-                <th scope="col" class="px-4 py-3 text-left font-medium text-gray-700">Invoice #</th>
-                <th scope="col" class="px-4 py-3 text-left font-medium text-gray-700">Client</th>
-                <th scope="col" class="px-4 py-3 text-left font-medium text-gray-700">Payment Date</th>
-                <th scope="col" class="px-4 py-3 text-left font-medium text-gray-700">Method</th>
-                <th scope="col" class="px-4 py-3 text-right font-medium text-gray-700">Amount</th>
-                <th scope="col" class="px-4 py-3 text-left font-medium text-gray-700">Status</th>
-                <th scope="col" class="px-4 py-3 text-right font-medium text-gray-700">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100 bg-white">
-              @for (payment of payments(); track trackById(payment.id)) {
-                <tr>
-                  <td class="px-4 py-3 font-medium text-gray-900">{{ payment.paymentNumber }}</td>
-                  <td class="px-4 py-3 text-gray-700">{{ invoiceNumber(payment) }}</td>
-                  <td class="px-4 py-3 text-gray-700">{{ customerName(payment) }}</td>
-                  <td class="px-4 py-3 text-gray-700">{{ formatDate(payment.paymentDate) }}</td>
-                  <td class="px-4 py-3 text-gray-700">{{ methodLabel(payment.method) }}</td>
-                  <td class="px-4 py-3 text-right text-gray-700">{{ displayAmount(payment.amount) }}</td>
-                  <td class="px-4 py-3">
-                    <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset {{ statusClass(payment.status) }}">
-                      {{ payment.status }}
+                <!-- Payment Number -->
+                <td class="px-4 py-3.5">
+                  <div class="flex items-center gap-2.5">
+                    <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#24242E] text-xs font-bold text-[#77DD77]">
+                      $
                     </span>
-                  </td>
-                  <td class="px-4 py-3 text-right whitespace-nowrap">
+                    <span class="font-mono text-xs font-bold text-[#F5F5F7]">{{ p.paymentNumber }}</span>
+                  </div>
+                </td>
+
+                <!-- Invoice Number -->
+                <td class="px-4 py-3.5 text-xs font-mono text-[#648BFF]">
+                  {{ invoiceNumber(p) }}
+                </td>
+
+                <!-- Client -->
+                <td class="px-4 py-3.5">
+                  <p class="max-w-[14rem] truncate font-semibold text-xs text-[#F5F5F7]" [title]="customerName(p)">
+                    {{ customerName(p) }}
+                  </p>
+                </td>
+
+                <!-- Payment Date -->
+                <td class="px-4 py-3.5 text-xs text-[#D4D4DC] whitespace-nowrap">
+                  {{ formatDate(p.paymentDate) }}
+                </td>
+
+                <!-- Method -->
+                <td class="px-4 py-3.5 text-xs text-[#D4D4DC] whitespace-nowrap">
+                  <span class="rounded-lg bg-[#141419] border border-[#24242A] px-2 py-0.5 text-[11px] font-semibold text-[#D4D4DC]">
+                    {{ methodLabel(p.method) }}
+                  </span>
+                </td>
+
+                <!-- Status Badge -->
+                <td class="px-4 py-3.5 whitespace-nowrap">
+                  <span [class]="statusClass(p.status)">
+                    <span>●</span>
+                    <span>{{ p.status | titlecase }}</span>
+                  </span>
+                </td>
+
+                <!-- Amount -->
+                <td class="px-4 py-3.5 text-right font-bold text-xs text-[#77DD77] whitespace-nowrap">
+                  $ {{ displayAmount(p.amount) }}
+                </td>
+
+                <!-- Actions -->
+                <td class="px-4 py-3.5 text-right whitespace-nowrap">
+                  <div class="flex items-center justify-end gap-1.5">
                     <button
                       type="button"
-                      (click)="onView(payment)"
-                      class="rounded-md border border-gray-300 px-2 py-1 text-xs text-gray-700 hover:bg-gray-100"
+                      (click)="onView(p)"
+                      class="flex h-7 w-7 items-center justify-center rounded-lg border border-[#2B2B33] bg-[#18181D] text-[#92929D] hover:border-[#648BFF] hover:text-[#648BFF] transition-colors"
+                      title="View Details"
                     >
-                      View
+                      <app-icon name="eye" [size]="14" />
                     </button>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-
-        <div class="flex items-center justify-between border-t px-4 py-3">
-          <span class="text-sm text-gray-600">
-            Page {{ page() }} of {{ totalPages() > 0 ? totalPages() : 1 }}
-            @if (total() > 0) {
-              <span class="text-gray-400">({{ total() }} total)</span>
+                    @if (canVoid() && p.status === 'RECORDED') {
+                      <button
+                        type="button"
+                        (click)="onVoid(p)"
+                        [disabled]="voidBusy()"
+                        class="flex h-7 w-7 items-center justify-center rounded-lg border border-[#2B2B33] bg-[#18181D] text-[#FF6B6B] hover:bg-[#FF6B6B]/20 transition-colors disabled:opacity-40"
+                        title="Void Payment"
+                      >
+                        <app-icon name="close" [size]="14" />
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
             }
-          </span>
-          <div class="flex items-center gap-2">
-            <button
-              type="button"
-              (click)="prevPage()"
-              [disabled]="page() <= 1"
-              class="rounded-md border border-gray-300 px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Previous
-            </button>
-            <button
-              type="button"
-              (click)="nextPage()"
-              [disabled]="page() >= (totalPages() > 0 ? totalPages() : 1)"
-              class="rounded-md border border-gray-300 px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      }
-    </div>
-  @if (showForm()) {
-    <app-payment-form
-      [isOpen]="showForm()"
-      (closed)="onFormClosed($event)"
-      (cancelled)="onFormCancelled()"
-    ></app-payment-form>
-  }
+          </tbody>
+        </table>
+      </div>
 
-  @if (viewing()) {
-    <app-payment-view
-      [payment]="viewing()"
-      [isOpen]="!!viewing()"
-      [canVoid]="canVoid()"
-      [voidBusy]="voidBusy()"
-      [voidError]="voidError()"
-      (closed)="onViewClosed()"
-      (voided)="onVoid($event)"
-    ></app-payment-view>
-  }
+      <!-- Mobile List View -->
+      <ul class="divide-y divide-[#202026] md:hidden">
+        @for (p of payments(); track trackById(p.id)) {
+          <li class="p-4 hover:bg-[#222228] transition-colors">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="font-mono text-xs font-bold text-[#F5F5F7]">{{ p.paymentNumber }}</p>
+                <p class="text-xs text-[#D4D4DC] mt-0.5 truncate">{{ customerName(p) }}</p>
+                <p class="text-xs font-bold text-[#77DD77] mt-1">$ {{ displayAmount(p.amount) }} · {{ methodLabel(p.method) }}</p>
+              </div>
+              <span [class]="statusClass(p.status)">
+                {{ p.status | titlecase }}
+              </span>
+            </div>
+            <div class="mt-3 flex items-center justify-end gap-2 border-t border-[#24242A] pt-2.5">
+              <button
+                type="button"
+                (click)="onView(p)"
+                class="rounded-lg border border-[#2B2B33] px-2.5 py-1 text-xs text-[#D4D4DC] hover:bg-[#25252B]"
+              >
+                View
+              </button>
+              @if (canVoid() && p.status === 'RECORDED') {
+                <button
+                  type="button"
+                  (click)="onVoid(p)"
+                  class="rounded-lg border border-[#2B2B33] px-2.5 py-1 text-xs text-[#FF6B6B] hover:bg-[#25252B]"
+                >
+                  Void
+                </button>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+
+      <!-- Bottom Pagination Bar -->
+      <div class="flex flex-col gap-3 border-t border-[#26262B] bg-[#18181E] px-4 py-3 sm:flex-row sm:items-center sm:justify-between text-xs text-[#92929D]">
+        <p>
+          Showing <span class="font-bold text-[#F5F5F7]">{{ rangeStart() }}</span> to
+          <span class="font-bold text-[#F5F5F7]">{{ rangeEnd() }}</span> of
+          <span class="font-bold text-[#F5F5F7]">{{ total() }}</span> results
+        </p>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            (click)="prevPage()"
+            [disabled]="page() <= 1"
+            class="inline-flex items-center gap-1 rounded-lg border border-[#2B2B33] bg-[#141419] px-3 py-1.5 text-xs font-semibold text-[#F5F5F7] hover:bg-[#202028] disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            <app-icon name="chevron-left" [size]="14" />
+            Previous
+          </button>
+          <span class="font-semibold text-[#F5F5F7] px-2">Page {{ page() }} of {{ totalPages() }}</span>
+          <button
+            type="button"
+            (click)="nextPage()"
+            [disabled]="page() >= totalPages()"
+            class="inline-flex items-center gap-1 rounded-lg border border-[#2B2B33] bg-[#141419] px-3 py-1.5 text-xs font-semibold text-[#F5F5F7] hover:bg-[#202028] disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            Next
+            <app-icon name="chevron-right" [size]="14" />
+          </button>
+        </div>
+      </div>
+    }
+  </div>
 </div>
+
+<!-- Record Payment Modal -->
+@if (showForm()) {
+  <app-payment-form
+    (closed)="onFormClosed($event)"
+    (cancelled)="onFormCancelled()"
+  />
+}
+
+<!-- View Payment Modal -->
+@if (viewing(); as v) {
+  <app-payment-view
+    [payment]="v"
+    [canVoid]="canVoid()"
+    [voidBusy]="voidBusy()"
+    [voidError]="voidError()"
+    (closed)="onViewClosed()"
+    (void)="onVoid(v)"
+  />
+}

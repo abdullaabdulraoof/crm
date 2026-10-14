@@ -73,6 +73,14 @@ export class NavbarComponent {
     return ROLE_LABELS[role] ?? role;
   });
 
+  readonly todayFormatted = computed(() => {
+    const d = new Date();
+    const dayName = d.toLocaleDateString('en-GB', { weekday: 'short' });
+    const dayNum = d.getDate();
+    const monthName = d.toLocaleDateString('en-GB', { month: 'short' });
+    return `Today, ${dayName} ${dayNum} ${monthName}`;
+  });
+
   toggleUserMenu(): void {
     this.menuOpen.update((open) => !open);
   }

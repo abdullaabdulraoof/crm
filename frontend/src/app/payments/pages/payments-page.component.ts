@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 
@@ -17,6 +17,7 @@ import { ClientsService } from '../../clients/clients.service';
 import { ClientOption } from '../../clients/clients.types';
 import { InvoicesService } from '../../invoices/services/invoices.service';
 import { Invoice } from '../../invoices/invoices.types';
+import { IconComponent } from '../../layout/icon/icon.component';
 
 interface Filters {
   search: string;
@@ -30,10 +31,16 @@ interface Filters {
 
 const EMPTY_FILTERS: Filters = { search: '', invoiceId: '', clientId: '', method: '', status: '', from: '', to: '' };
 
+const STATUS_OPTIONS = [
+  { value: 'RECORDED', label: 'Recorded' },
+  { value: 'VOIDED', label: 'Voided' },
+  { value: 'REFUNDED', label: 'Refunded' },
+];
+
 @Component({
   selector: 'app-payments-page',
   standalone: true,
-  imports: [CommonModule, PaymentFormComponent, PaymentViewComponent],
+  imports: [CommonModule, PaymentFormComponent, PaymentViewComponent, IconComponent],
   templateUrl: './payments-page.component.html',
 })
 export class PaymentsPageComponent implements OnInit {
@@ -44,6 +51,7 @@ export class PaymentsPageComponent implements OnInit {
 
   readonly methods = PAYMENT_METHODS;
   readonly methodLabels = PAYMENT_METHOD_LABELS;
+  readonly statusOptions = STATUS_OPTIONS;
 
   readonly payments = signal<Payment[]>([]);
   readonly clients = signal<ClientOption[]>([]);
@@ -61,9 +69,30 @@ export class PaymentsPageComponent implements OnInit {
   readonly voidBusy = signal(false);
   readonly voidError = signal<string | null>(null);
 
+  readonly showFilters = signal(false);
+  readonly selectedPaymentIds = signal<Set<string>>(new Set());
+
   // Frontend convenience only - the backend enforces the real permissions.
   readonly canRecord = signal(false);
   readonly canVoid = signal(false);
+
+  readonly rangeStart = computed(() => (this.total() === 0 ? 0 : (this.page() - 1) * this.limit + 1));
+  readonly rangeEnd = computed(() => Math.min(this.page() * this.limit, this.total()));
+
+  readonly activeChips = computed(() => {
+    const f = this.filters();
+    const chips: { key: keyof Filters; label: string; value: string }[] = [];
+    if (f.search) chips.push({ key: 'search', label: 'Search', value: f.search });
+    if (f.status) chips.push({ key: 'status', label: 'Status', value: f.status });
+    if (f.method) chips.push({ key: 'method', label: 'Method', value: this.methodLabel(f.method as PaymentMethod) });
+    if (f.clientId) {
+      const c = this.clients().find((x) => x.id === f.clientId);
+      chips.push({ key: 'clientId', label: 'Client', value: c?.name || f.clientId });
+    }
+    if (f.from) chips.push({ key: 'from', label: 'From', value: f.from });
+    if (f.to) chips.push({ key: 'to', label: 'To', value: f.to });
+    return chips;
+  });
 
   ngOnInit(): void {
     this.updatePermissions();
@@ -153,6 +182,12 @@ export class PaymentsPageComponent implements OnInit {
     this.refresh();
   }
 
+  removeFilter(key: keyof Filters): void {
+    this.filters.update((f) => ({ ...f, [key]: '' }));
+    this.page.set(1);
+    this.refresh();
+  }
+
   clearFilters(): void {
     this.filters.set({ ...EMPTY_FILTERS });
     this.page.set(1);
@@ -160,14 +195,49 @@ export class PaymentsPageComponent implements OnInit {
   }
 
   hasActiveFilters(): boolean {
-    const f = this.filters();
-    return !!(f.search || f.invoiceId || f.clientId || f.method || f.status || f.from || f.to);
+    return this.activeChips().length > 0;
+  }
+
+  toggleSelectAll(checked: boolean): void {
+    if (checked) {
+      this.selectedPaymentIds.set(new Set(this.payments().map((p) => p.id)));
+    } else {
+      this.selectedPaymentIds.set(new Set());
+    }
+  }
+
+  toggleSelectPayment(id: string): void {
+    this.selectedPaymentIds.update((set) => {
+      const next = new Set(set);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  isPaymentSelected(id: string): boolean {
+    return this.selectedPaymentIds().has(id);
+  }
+
+  isAllSelected(): boolean {
+    const list = this.payments();
+    return list.length > 0 && list.every((p) => this.selectedPaymentIds().has(p.id));
   }
 
   onAdd(): void {
     this.showForm.set(true);
     this.error.set(null);
     this.success.set(null);
+  }
+
+  onView(payment: Payment): void {
+    this.viewing.set(payment);
+    this.voidError.set(null);
+  }
+
+  onViewClosed(): void {
+    this.viewing.set(null);
+    this.voidError.set(null);
   }
 
   onFormClosed(saved: boolean): void {
@@ -183,19 +253,11 @@ export class PaymentsPageComponent implements OnInit {
     this.showForm.set(false);
   }
 
-  onView(payment: Payment): void {
-    this.voidError.set(null);
-    this.viewing.set(payment);
-  }
-
-  onViewClosed(): void {
-    this.viewing.set(null);
-    this.voidError.set(null);
-  }
-
-  onVoid(reason: string): void {
-    const payment = this.viewing();
-    if (!payment || this.voidBusy()) return;
+  onVoid(payment: Payment): void {
+    if (this.voidBusy()) return;
+    const input = prompt('Reason for voiding payment (optional):');
+    if (input === null) return;
+    const reason = input.trim();
 
     this.voidBusy.set(true);
     this.voidError.set(null);
@@ -243,13 +305,13 @@ export class PaymentsPageComponent implements OnInit {
   statusClass(status: string): string {
     switch (status) {
       case 'RECORDED':
-        return 'bg-green-50 text-green-700 ring-green-200';
+        return 'crm-status-pill status-green';
       case 'VOIDED':
-        return 'bg-gray-100 text-gray-600 ring-gray-200';
+        return 'crm-status-pill status-red';
       case 'REFUNDED':
-        return 'bg-indigo-50 text-indigo-700 ring-indigo-200';
+        return 'crm-status-pill status-amber';
       default:
-        return 'bg-gray-100 text-gray-600 ring-gray-200';
+        return 'crm-status-pill status-muted';
     }
   }
 

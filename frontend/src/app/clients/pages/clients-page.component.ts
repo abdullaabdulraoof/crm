@@ -58,10 +58,48 @@ export class ClientsPageComponent implements OnInit {
     this.total() === 0 ? 0 : (this.page() - 1) * this.limit() + 1
   );
   readonly rangeEnd = computed(() => Math.min(this.page() * this.limit(), this.total()));
-  readonly activeFilterCount = computed(() => {
+  readonly showFilters = signal(false);
+  readonly selectedClientIds = signal<Set<string>>(new Set());
+
+  readonly activeChips = computed(() => {
     const f = this.filters();
-    return [f.search, f.clientType].filter(Boolean).length;
+    const chips: { key: keyof Filters; label: string; value: string }[] = [];
+    if (f.search) chips.push({ key: 'search', label: 'Search', value: f.search });
+    if (f.clientType) chips.push({ key: 'clientType', label: 'Type', value: f.clientType === 'BUSINESS' ? 'Business' : 'Individual' });
+    return chips;
   });
+
+  removeFilter(key: keyof Filters): void {
+    this.filters.update((f) => ({ ...f, [key]: '' }));
+    this.page.set(1);
+    this.refresh();
+  }
+
+  toggleSelectAll(checked: boolean): void {
+    if (checked) {
+      this.selectedClientIds.set(new Set(this.clients().map((c) => c.id)));
+    } else {
+      this.selectedClientIds.set(new Set());
+    }
+  }
+
+  toggleSelectClient(id: string): void {
+    this.selectedClientIds.update((set) => {
+      const next = new Set(set);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  isClientSelected(id: string): boolean {
+    return this.selectedClientIds().has(id);
+  }
+
+  isAllSelected(): boolean {
+    const clients = this.clients();
+    return clients.length > 0 && clients.every((c) => this.selectedClientIds().has(c.id));
+  }
 
   ngOnInit(): void {
     this.updatePermissions();
@@ -140,7 +178,7 @@ export class ClientsPageComponent implements OnInit {
   }
 
   hasActiveFilters(): boolean {
-    return this.activeFilterCount() > 0;
+    return this.activeChips().length > 0;
   }
 
   onPageSize(value: string): void {

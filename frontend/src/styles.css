@@ -1,59 +1,120 @@
-/* You can add global styles to this file, and also import other style files */
-
 @import 'tailwindcss';
 
+:root {
+  --crm-bg: #101014;
+  --crm-sidebar-bg: #09090D;
+  --crm-surface: #111116;
+  --crm-card: #1C1C20;
+  --crm-card-hover: #222228;
+  --crm-table-header: #242428;
+  --crm-border: #26262B;
+  --crm-border-subtle: #1F1F24;
+  --crm-text-primary: #F5F5F7;
+  --crm-text-secondary: #92929D;
+  --crm-text-muted: #6B6B78;
+  --crm-blue: #648BFF;
+  --crm-blue-hover: #5078F0;
+  --crm-green: #77DD77;
+  --crm-green-hover: #63C963;
+  --crm-amber: #FFA07A;
+  --crm-yellow: #FED766;
+  --crm-red: #FF6B6B;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--crm-bg);
+  color: var(--crm-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Sleek Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #2D2D35;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3E3E48;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   CRM Shell & Layout Overrides
+   ───────────────────────────────────────────────────────────── */
 .crm-shell {
-  background: #111115;
-  color: #e4e4e7;
+  background-color: var(--crm-bg) !important;
+  color: var(--crm-text-primary);
+  min-height: 100dvh;
 }
 
 .crm-main {
-  background: #111115;
+  background-color: var(--crm-bg) !important;
 }
 
-.crm-shell .app-topbar,
+/* Shell Header / Topbar */
+.crm-shell .app-topbar {
+  border-color: var(--crm-border) !important;
+  background-color: #0D0D12 !important;
+  color: var(--crm-text-primary);
+}
+
+.crm-shell .app-topbar h1 {
+  color: var(--crm-text-primary) !important;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* Shell Sidebar */
 .crm-shell aside.app-sidebar {
-  border-color: #28282f !important;
-  background-color: #09090d !important;
-  color: #e4e4e7;
-}
-
-.crm-shell .app-topbar h1,
-.crm-shell .app-sidebar .text-slate-900 {
-  color: #f4f4f5 !important;
-}
-
-.crm-shell .app-topbar .text-slate-500,
-.crm-shell .app-topbar .text-slate-400,
-.crm-shell .app-sidebar .text-slate-400 {
-  color: #92929e !important;
-}
-
-.crm-shell .app-sidebar .text-slate-600 {
-  color: #b0b0ba !important;
-}
-
-.crm-shell .app-sidebar a:hover {
-  background-color: #1b1b23 !important;
-  color: #f4f4f5 !important;
-}
-
-.crm-shell .app-sidebar a.bg-indigo-50 {
-  background-color: #182647 !important;
-  color: #9bb5ff !important;
+  border-color: var(--crm-border) !important;
+  background-color: var(--crm-sidebar-bg) !important;
+  color: var(--crm-text-primary);
 }
 
 .crm-shell .app-sidebar .border-slate-100,
 .crm-shell .app-sidebar .border-slate-200 {
-  border-color: #28282f !important;
+  border-color: var(--crm-border) !important;
 }
 
-.crm-shell .bg-white {
-  background-color: #1c1c21 !important;
+.crm-shell .app-sidebar a {
+  color: var(--crm-text-secondary);
+  transition: all 0.15s ease-in-out;
+}
+
+.crm-shell .app-sidebar a:hover {
+  background-color: #17171E !important;
+  color: var(--crm-text-primary) !important;
+}
+
+/* Active Nav Item: pill/rounded badge with high contrast matching reference */
+.crm-shell .app-sidebar a.bg-indigo-50,
+.crm-shell .app-sidebar a.active-nav {
+  background-color: #24242E !important;
+  color: #FFFFFF !important;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Cards & Surfaces
+   ───────────────────────────────────────────────────────────── */
+.crm-shell .bg-white,
+.crm-shell [role="dialog"],
+.crm-card {
+  background-color: var(--crm-card) !important;
+  border-color: var(--crm-border) !important;
+  color: var(--crm-text-primary);
 }
 
 .crm-shell .bg-white\/85 {
-  background-color: rgb(9 9 13 / 90%) !important;
+  background-color: rgba(13, 13, 18, 0.9) !important;
 }
 
 .crm-shell .bg-slate-50,
@@ -63,134 +124,223 @@
 
 .crm-shell .bg-slate-100,
 .crm-shell .bg-gray-100 {
-  background-color: #292930 !important;
+  background-color: #222228 !important;
 }
 
 .crm-shell .bg-slate-200,
 .crm-shell .bg-gray-200 {
-  background-color: #383841 !important;
+  background-color: #2B2B33 !important;
 }
 
+/* ─────────────────────────────────────────────────────────────
+   Text Tokens
+   ───────────────────────────────────────────────────────────── */
 .crm-shell .text-slate-900,
 .crm-shell .text-gray-900,
 .crm-shell .text-slate-800,
 .crm-shell .text-gray-800 {
-  color: #f4f4f5 !important;
+  color: var(--crm-text-primary) !important;
 }
 
 .crm-shell .text-slate-700,
 .crm-shell .text-gray-700 {
-  color: #d4d4d8 !important;
+  color: #D4D4DC !important;
 }
 
 .crm-shell .text-slate-600,
 .crm-shell .text-gray-600 {
-  color: #b4b4be !important;
+  color: #B2B2BE !important;
 }
 
 .crm-shell .text-slate-500,
 .crm-shell .text-gray-500 {
-  color: #92929e !important;
+  color: var(--crm-text-secondary) !important;
 }
 
 .crm-shell .text-slate-400,
 .crm-shell .text-gray-400 {
-  color: #777782 !important;
+  color: var(--crm-text-muted) !important;
 }
 
-.crm-shell .text-slate-300,
-.crm-shell .text-gray-300 {
-  color: #a1a1aa !important;
-}
-
+/* Borders */
 .crm-shell .border-slate-100,
-.crm-shell .border-gray-100 {
-  border-color: #24242b !important;
-}
-
+.crm-shell .border-gray-100,
 .crm-shell .border-slate-200,
 .crm-shell .border-gray-200 {
-  border-color: #303038 !important;
+  border-color: var(--crm-border) !important;
 }
 
 .crm-shell .border-slate-300,
 .crm-shell .border-gray-300 {
-  border-color: #41414b !important;
+  border-color: #35353E !important;
 }
 
 .crm-shell .divide-slate-100 > :not(:first-child),
-.crm-shell .divide-gray-100 > :not(:first-child) {
-  border-color: #292930 !important;
-}
-
+.crm-shell .divide-gray-100 > :not(:first-child),
 .crm-shell .divide-slate-200 > :not(:first-child),
 .crm-shell .divide-gray-200 > :not(:first-child) {
-  border-color: #34343d !important;
+  border-color: var(--crm-border) !important;
 }
 
+/* ─────────────────────────────────────────────────────────────
+   Buttons & Primary Accents
+   ───────────────────────────────────────────────────────────── */
 .crm-shell .bg-indigo-600,
 .crm-shell .bg-blue-600 {
-  background-color: #4f7fff !important;
+  background-color: var(--crm-blue) !important;
+  color: #FFFFFF !important;
 }
 
 .crm-shell .hover\:bg-indigo-700:hover,
 .crm-shell .hover\:bg-blue-700:hover {
-  background-color: #3d6de8 !important;
+  background-color: var(--crm-blue-hover) !important;
 }
 
 .crm-shell .text-indigo-600,
 .crm-shell .text-indigo-700,
 .crm-shell .text-blue-600,
-.crm-shell .text-blue-700,
-.crm-shell .text-emerald-600,
-.crm-shell .text-emerald-700 {
-  color: #83a4ff !important;
+.crm-shell .text-blue-700 {
+  color: var(--crm-blue) !important;
 }
 
 .crm-shell .border-indigo-500,
-.crm-shell .border-blue-500,
-.crm-shell .border-emerald-500 {
-  border-color: #5d87ff !important;
+.crm-shell .border-blue-500 {
+  border-color: var(--crm-blue) !important;
 }
 
-.crm-shell .bg-emerald-600 {
-  background-color: #4f7fff !important;
+/* ─────────────────────────────────────────────────────────────
+   Form Controls (Inputs, Selects, Textareas, Checkboxes)
+   ───────────────────────────────────────────────────────────── */
+.crm-shell main input:not([type="checkbox"]):not([type="radio"]),
+.crm-shell main select,
+.crm-shell main textarea,
+.crm-shell [role="dialog"] input:not([type="checkbox"]):not([type="radio"]),
+.crm-shell [role="dialog"] select,
+.crm-shell [role="dialog"] textarea {
+  border: 1px solid var(--crm-border) !important;
+  background-color: #141419 !important;
+  color: var(--crm-text-primary) !important;
+  border-radius: 10px;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
+.crm-shell main input:focus,
+.crm-shell main select:focus,
+.crm-shell main textarea:focus,
+.crm-shell [role="dialog"] input:focus,
+.crm-shell [role="dialog"] select:focus,
+.crm-shell [role="dialog"] textarea:focus {
+  border-color: var(--crm-blue) !important;
+  box-shadow: 0 0 0 3px rgba(100, 139, 255, 0.2) !important;
+  outline: none !important;
+}
+
+.crm-shell main input::placeholder,
+.crm-shell main textarea::placeholder,
+.crm-shell [role="dialog"] input::placeholder,
+.crm-shell [role="dialog"] textarea::placeholder {
+  color: var(--crm-text-muted) !important;
+}
+
+.crm-shell main option,
+.crm-shell [role="dialog"] option {
+  background-color: var(--crm-card);
+  color: var(--crm-text-primary);
+}
+
+/* Custom Checkbox */
+.crm-shell input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 1.125rem;
+  height: 1.125rem;
+  border: 1.5px solid #3A3A44;
+  border-radius: 4px;
+  background-color: #16161C;
+  cursor: pointer;
+  display: inline-grid;
+  place-content: center;
+  transition: all 0.15s;
+  vertical-align: middle;
+}
+
+.crm-shell input[type="checkbox"]:hover {
+  border-color: var(--crm-blue);
+}
+
+.crm-shell input[type="checkbox"]:checked {
+  background-color: var(--crm-blue);
+  border-color: var(--crm-blue);
+}
+
+.crm-shell input[type="checkbox"]:checked::before {
+  content: "";
+  width: 9px;
+  height: 5px;
+  border-left: 2px solid #FFFFFF;
+  border-bottom: 2px solid #FFFFFF;
+  transform: rotate(-45deg) translate(0.5px, -0.5px);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Tables
+   ───────────────────────────────────────────────────────────── */
 .crm-shell main table:not(.crm-print-table) {
-  color: #d4d4d8;
+  color: #D4D4DC;
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
 .crm-shell main table:not(.crm-print-table) thead {
-  background-color: #141419 !important;
+  background-color: var(--crm-table-header) !important;
 }
 
 .crm-shell main table:not(.crm-print-table) th {
-  color: #a1a1aa !important;
+  color: var(--crm-text-secondary) !important;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--crm-border);
+}
+
+.crm-shell main table:not(.crm-print-table) td {
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid var(--crm-border-subtle);
+  font-size: 0.8125rem;
+}
+
+.crm-shell main table:not(.crm-print-table) tbody tr {
+  transition: background-color 0.12s ease;
 }
 
 .crm-shell main table:not(.crm-print-table) tbody tr:hover {
-  background-color: #23232b !important;
+  background-color: var(--crm-card-hover) !important;
 }
 
+/* ─────────────────────────────────────────────────────────────
+   Invoice Print / Preview Documents
+   ───────────────────────────────────────────────────────────── */
 .crm-shell .invoice-document {
-  border-radius: 0.375rem;
-  background: #fff !important;
-  color: #1f2937 !important;
+  border-radius: 0.5rem;
+  background: #FFFFFF !important;
+  color: #1F2937 !important;
 }
 
 .crm-shell .invoice-document .bg-slate-100 {
-  background-color: #f1f5f9 !important;
+  background-color: #F1F5F9 !important;
 }
 
 .crm-shell .invoice-document .border-slate-200,
 .crm-shell .invoice-document .border-slate-300 {
-  border-color: #cbd5e1 !important;
+  border-color: #CBD5E1 !important;
 }
 
 .crm-shell .invoice-document .text-slate-900,
 .crm-shell .invoice-document .text-slate-800 {
-  color: #1e293b !important;
+  color: #1E293B !important;
 }
 
 .crm-shell .invoice-document .text-slate-700 {
@@ -202,27 +352,153 @@
 }
 
 .crm-shell .invoice-document .text-slate-500 {
-  color: #64748b !important;
+  color: #64748B !important;
 }
 
 .crm-shell .invoice-document .text-slate-400 {
-  color: #94a3b8 !important;
+  color: #94A3B8 !important;
 }
 
-.crm-shell main input,
-.crm-shell main select,
-.crm-shell main textarea {
-  border-color: #3a3a44 !important;
-  background-color: #141419 !important;
-  color: #f4f4f5 !important;
+/* ─────────────────────────────────────────────────────────────
+   Premium Reusable UI Component Classes
+   ───────────────────────────────────────────────────────────── */
+
+/* Top Reference-style Action Button (crisp white pill or blue pill) */
+.crm-btn-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  background: #FFFFFF;
+  color: #101014;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  box-shadow: 0 2px 10px rgba(255, 255, 255, 0.12);
+  transition: all 0.15s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+}
+.crm-btn-add:hover {
+  background: #E8E8EE;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(255, 255, 255, 0.18);
+}
+.crm-btn-add:active {
+  transform: translateY(0);
 }
 
-.crm-shell main input::placeholder,
-.crm-shell main textarea::placeholder {
-  color: #777782 !important;
+.crm-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #1C1C20;
+  color: var(--crm-text-primary);
+  border: 1px solid var(--crm-border);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  padding: 0.5rem 0.875rem;
+  border-radius: 10px;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+.crm-btn-secondary:hover {
+  background: #25252B;
+  border-color: #35353E;
 }
 
-.crm-shell main option {
-  background-color: #1c1c21;
-  color: #f4f4f5;
+/* Reference-style Circular Arrow Icon Button (↗) */
+.crm-icon-arrow-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: #24242A;
+  color: #FFFFFF;
+  border: 1px solid #32323B;
+  transition: all 0.15s ease;
+}
+.crm-icon-arrow-btn:hover {
+  background: var(--crm-blue);
+  color: #FFFFFF;
+  border-color: var(--crm-blue);
+  transform: scale(1.05);
+}
+
+/* Active Filter Chips */
+.crm-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #1C1C20;
+  border: 1px solid #2E2E36;
+  border-radius: 9999px;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--crm-text-primary);
+  transition: all 0.12s ease;
+}
+.crm-chip:hover {
+  border-color: #42424E;
+  background: #24242A;
+}
+.crm-chip-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  color: var(--crm-text-muted);
+  cursor: pointer;
+  transition: color 0.12s;
+}
+.crm-chip-close:hover {
+  color: #FFFFFF;
+}
+
+/* Semantic Status Pills (closely matching the reference screen 2) */
+.crm-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.crm-status-pill.status-green {
+  background: rgba(119, 221, 119, 0.14);
+  color: #77DD77;
+  border: 1px solid rgba(119, 221, 119, 0.25);
+}
+.crm-status-pill.status-blue {
+  background: rgba(100, 139, 255, 0.14);
+  color: #648BFF;
+  border: 1px solid rgba(100, 139, 255, 0.25);
+}
+.crm-status-pill.status-amber {
+  background: rgba(255, 160, 122, 0.14);
+  color: #FFA07A;
+  border: 1px solid rgba(255, 160, 122, 0.25);
+}
+.crm-status-pill.status-yellow {
+  background: rgba(254, 215, 102, 0.14);
+  color: #FED766;
+  border: 1px solid rgba(254, 215, 102, 0.25);
+}
+.crm-status-pill.status-red {
+  background: rgba(255, 107, 107, 0.14);
+  color: #FF6B6B;
+  border: 1px solid rgba(255, 107, 107, 0.25);
+}
+.crm-status-pill.status-muted {
+  background: rgba(146, 146, 157, 0.14);
+  color: #92929D;
+  border: 1px solid rgba(146, 146, 157, 0.22);
 }

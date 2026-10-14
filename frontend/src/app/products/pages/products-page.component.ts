@@ -69,6 +69,49 @@ export class ProductsPageComponent implements OnInit {
   readonly rangeStart = computed(() => (this.total() === 0 ? 0 : (this.page() - 1) * this.limit() + 1));
   readonly rangeEnd = computed(() => Math.min(this.page() * this.limit(), this.total()));
 
+  readonly selectedProductIds = signal<Set<string>>(new Set());
+
+  readonly activeChips = computed(() => {
+    const f = this.filters();
+    const chips: { key: keyof Filters; label: string; value: string }[] = [];
+    if (f.search) chips.push({ key: 'search', label: 'Search', value: f.search });
+    if (f.type) chips.push({ key: 'type', label: 'Type', value: f.type === 'PRODUCT' ? 'Product' : 'Service' });
+    if (f.isActive) chips.push({ key: 'isActive', label: 'Status', value: f.isActive === 'true' ? 'Active' : 'Inactive' });
+    return chips;
+  });
+
+  removeFilter(key: keyof Filters): void {
+    this.filters.update((f) => ({ ...f, [key]: '' }));
+    this.page.set(1);
+    this.refresh();
+  }
+
+  toggleSelectAll(checked: boolean): void {
+    if (checked) {
+      this.selectedProductIds.set(new Set(this.products().map((p) => p.id)));
+    } else {
+      this.selectedProductIds.set(new Set());
+    }
+  }
+
+  toggleSelectProduct(id: string): void {
+    this.selectedProductIds.update((set) => {
+      const next = new Set(set);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  isProductSelected(id: string): boolean {
+    return this.selectedProductIds().has(id);
+  }
+
+  isAllSelected(): boolean {
+    const products = this.products();
+    return products.length > 0 && products.every((p) => this.selectedProductIds().has(p.id));
+  }
+
   ngOnInit(): void {
     this.refresh();
   }
@@ -234,6 +277,10 @@ export class ProductsPageComponent implements OnInit {
 
   displayPrice(price: number): string {
     return typeof price === 'number' ? price.toLocaleString() : String(price);
+  }
+
+  formatCurrency(price: number): string {
+    return '$ ' + this.displayPrice(price);
   }
 
   statusLabel(p: Product): string {

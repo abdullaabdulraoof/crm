@@ -1,65 +1,87 @@
-<header class="app-topbar sticky top-0 z-20 border-b border-slate-200 bg-white/85 backdrop-blur">
-  <div class="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
-    <button
-      type="button"
-      class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 lg:hidden"
-      (click)="toggleMenu.emit()"
-      aria-label="Open navigation menu"
-      aria-controls="app-sidebar"
-    >
-      <app-icon name="menu" [size]="22" />
-    </button>
+<header class="app-topbar sticky top-0 z-20 border-b border-[#26262B] bg-[#09090D]/90 backdrop-blur-md">
+  <div class="flex h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+    <!-- Left Section: Mobile Menu + Title -->
+    <div class="flex items-center gap-3">
+      <button
+        type="button"
+        class="rounded-lg p-2 text-[#92929D] hover:bg-[#1A1A22] hover:text-[#F5F5F7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#648BFF] lg:hidden"
+        (click)="toggleMenu.emit()"
+        aria-label="Open navigation menu"
+        aria-controls="app-sidebar"
+      >
+        <app-icon name="menu" [size]="20" />
+      </button>
 
-    <h1 class="truncate text-base font-semibold text-slate-900 sm:text-lg">
-      {{ title() }}
-    </h1>
+      <h1 class="truncate text-base font-bold text-[#F5F5F7] sm:text-lg tracking-tight">
+        {{ title() }}
+      </h1>
+    </div>
 
-    <div class="ml-auto flex items-center gap-2">
+    <!-- Center Section: Real Dynamic Date (Reference Screen Style) -->
+    <div class="hidden items-center gap-2 rounded-full border border-[#24242A] bg-[#141419] px-3.5 py-1.5 text-xs font-medium text-[#92929D] md:flex shadow-inner">
+      <span class="inline-block h-2 w-2 rounded-full bg-[#77DD77]/80 animate-pulse"></span>
+      <span>{{ todayFormatted() }}</span>
+    </div>
+
+    <!-- Right Section: Tools + Profile -->
+    <div class="flex items-center gap-2.5">
+      <!-- Notification Icon Button -->
+      <button
+        type="button"
+        class="relative flex h-9 w-9 items-center justify-center rounded-full border border-[#24242A] bg-[#141419] text-[#92929D] transition-colors hover:border-[#33333E] hover:bg-[#1C1C22] hover:text-[#F5F5F7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#648BFF]"
+        title="Notifications"
+        aria-label="Notifications"
+      >
+        <app-icon name="bell" [size]="16" />
+        <span class="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-[#648BFF]"></span>
+      </button>
+
+      <!-- User Menu -->
       <div class="relative" data-user-menu>
         <button
           #userMenuButton
           type="button"
-          class="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 motion-reduce:transition-none"
+          class="flex items-center gap-2.5 rounded-full border border-[#24242A] bg-[#141419] p-1 pr-3 transition-all hover:border-[#33333E] hover:bg-[#1C1C22] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#648BFF]"
           (click)="toggleUserMenu()"
           [attr.aria-expanded]="menuOpen()"
           aria-haspopup="menu"
           aria-label="Open user menu"
         >
           <span
-            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-semibold text-white"
+            class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-[#648BFF] to-[#8FA9FF] text-xs font-bold text-[#09090D] shadow-sm"
             aria-hidden="true"
           >
             {{ initials() }}
           </span>
           <span class="hidden min-w-0 text-left sm:block">
-            <span class="block max-w-[12rem] truncate text-sm font-medium text-slate-900">
+            <span class="block max-w-[9rem] truncate text-xs font-semibold text-[#F5F5F7]">
               {{ user()?.name || 'Account' }}
             </span>
             @if (roleLabel()) {
-              <span class="block text-xs text-slate-500">{{ roleLabel() }}</span>
+              <span class="block text-[10px] font-medium text-[#92929D] leading-none">{{ roleLabel() }}</span>
             }
           </span>
-          <app-icon name="chevron-down" [size]="16" class="hidden text-slate-400 sm:block" />
+          <app-icon name="chevron-down" [size]="14" class="hidden text-[#92929D] sm:block" />
         </button>
 
         @if (menuOpen()) {
           <div
-            class="absolute right-0 z-30 mt-2 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg"
+            class="absolute right-0 z-30 mt-2 w-56 overflow-hidden rounded-xl border border-[#2A2A33] bg-[#18181E] py-1 shadow-2xl"
             role="menu"
           >
-            <div class="border-b border-slate-100 px-4 py-3">
-              <p class="truncate text-sm font-medium text-slate-900">{{ user()?.name || 'Account' }}</p>
+            <div class="border-b border-[#24242C] px-4 py-3">
+              <p class="truncate text-sm font-semibold text-[#F5F5F7]">{{ user()?.name || 'Account' }}</p>
               @if (roleLabel()) {
-                <p class="text-xs text-slate-500">{{ roleLabel() }}</p>
+                <p class="text-xs text-[#92929D]">{{ roleLabel() }}</p>
               }
             </div>
             <button
               type="button"
               role="menuitem"
-              class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500"
+              class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-[#FF6B6B] transition-colors hover:bg-[#22222B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FF6B6B]"
               (click)="requestLogout()"
             >
-              <app-icon name="logout" [size]="18" />
+              <app-icon name="logout" [size]="16" />
               Logout
             </button>
           </div>
@@ -71,7 +93,7 @@
 
 @if (confirmingLogout()) {
   <div
-    class="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 sm:items-center sm:px-4"
+    class="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center sm:px-4"
     (click)="cancelLogout()"
   >
     <div
@@ -79,27 +101,27 @@
       aria-modal="true"
       aria-labelledby="logoutDialogTitle"
       aria-describedby="logoutDialogMessage"
-      class="w-full max-w-md rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl sm:p-6"
+      class="w-full max-w-md rounded-t-2xl border border-[#2C2C35] bg-[#18181E] p-6 shadow-2xl sm:rounded-2xl"
       (click)="$event.stopPropagation()"
     >
-      <div class="flex items-start gap-3">
-        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-600">
+      <div class="flex items-start gap-3.5">
+        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#FF6B6B]/15 text-[#FF6B6B]">
           <app-icon name="logout" [size]="20" />
         </span>
         <div class="min-w-0">
-          <h2 id="logoutDialogTitle" class="text-lg font-semibold text-slate-900">Log out?</h2>
-          <p id="logoutDialogMessage" class="mt-1 text-sm text-slate-600">
+          <h2 id="logoutDialogTitle" class="text-base font-bold text-[#F5F5F7]">Log out?</h2>
+          <p id="logoutDialogMessage" class="mt-1 text-sm text-[#92929D]">
             Are you sure you want to log out of your account?
           </p>
         </div>
       </div>
-      <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+      <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
         <button
           #logoutCancel
           type="button"
           [disabled]="loggingOut()"
           (click)="cancelLogout()"
-          class="inline-flex justify-center rounded-lg border border-slate-300 px-3.5 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
+          class="inline-flex justify-center rounded-lg border border-[#33333E] bg-[#202028] px-4 py-2 text-xs font-semibold text-[#F5F5F7] transition-colors hover:bg-[#282833] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#648BFF] disabled:cursor-not-allowed disabled:opacity-50"
         >
           Cancel
         </button>
@@ -107,7 +129,7 @@
           type="button"
           [disabled]="loggingOut()"
           (click)="confirmLogout()"
-          class="inline-flex justify-center rounded-lg bg-red-600 px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-red-300 motion-reduce:transition-none"
+          class="inline-flex justify-center rounded-lg bg-[#FF6B6B] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[#FF5252] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B6B] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {{ loggingOut() ? 'Logging out…' : 'Confirm Logout' }}
         </button>

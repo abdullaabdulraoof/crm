@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 
@@ -9,6 +9,7 @@ import { InvoiceViewComponent } from '../components/invoice-view.component';
 import { AuthService } from '../../auth/auth.service';
 import { ClientsService } from '../../clients/clients.service';
 import { ClientOption } from '../../clients/clients.types';
+import { IconComponent } from '../../layout/icon/icon.component';
 
 interface Filters {
   search: string;
@@ -20,10 +21,19 @@ interface Filters {
 
 const EMPTY_FILTERS: Filters = { search: '', status: '', clientId: '', from: '', to: '' };
 
+const STATUS_OPTIONS = [
+  { value: 'DRAFT', label: 'Draft' },
+  { value: 'ISSUED', label: 'Issued' },
+  { value: 'PARTIALLY_PAID', label: 'Partially Paid' },
+  { value: 'PAID', label: 'Paid' },
+  { value: 'OVERDUE', label: 'Overdue' },
+  { value: 'CANCELLED', label: 'Cancelled' },
+];
+
 @Component({
   selector: 'app-invoices-page',
   standalone: true,
-  imports: [CommonModule, InvoiceFormComponent, InvoiceViewComponent],
+  imports: [CommonModule, InvoiceFormComponent, InvoiceViewComponent, IconComponent],
   templateUrl: './invoices-page.component.html',
 })
 export class InvoicesPageComponent implements OnInit {
@@ -46,9 +56,30 @@ export class InvoicesPageComponent implements OnInit {
   readonly viewing = signal<Invoice | null>(null);
   readonly busyId = signal<string | null>(null);
 
+  readonly statusOptions = STATUS_OPTIONS;
+  readonly showFilters = signal(false);
+  readonly selectedInvoiceIds = signal<Set<string>>(new Set());
+
   // Frontend convenience only - the backend enforces the real permissions.
   readonly canEdit = signal(false);
   readonly canDelete = signal(false);
+
+  readonly rangeStart = computed(() => (this.total() === 0 ? 0 : (this.page() - 1) * this.limit + 1));
+  readonly rangeEnd = computed(() => Math.min(this.page() * this.limit, this.total()));
+
+  readonly activeChips = computed(() => {
+    const f = this.filters();
+    const chips: { key: keyof Filters; label: string; value: string }[] = [];
+    if (f.search) chips.push({ key: 'search', label: 'Search', value: f.search });
+    if (f.status) chips.push({ key: 'status', label: 'Status', value: f.status });
+    if (f.clientId) {
+      const c = this.clients().find((x) => x.id === f.clientId);
+      chips.push({ key: 'clientId', label: 'Client', value: c?.name || f.clientId });
+    }
+    if (f.from) chips.push({ key: 'from', label: 'From', value: f.from });
+    if (f.to) chips.push({ key: 'to', label: 'To', value: f.to });
+    return chips;
+  });
 
   ngOnInit(): void {
     this.updatePermissions();
@@ -128,6 +159,12 @@ export class InvoicesPageComponent implements OnInit {
     this.refresh();
   }
 
+  removeFilter(key: keyof Filters): void {
+    this.filters.update((f) => ({ ...f, [key]: '' }));
+    this.page.set(1);
+    this.refresh();
+  }
+
   clearFilters(): void {
     this.filters.set({ ...EMPTY_FILTERS });
     this.page.set(1);
@@ -135,8 +172,33 @@ export class InvoicesPageComponent implements OnInit {
   }
 
   hasActiveFilters(): boolean {
-    const f = this.filters();
-    return !!(f.search || f.status || f.clientId || f.from || f.to);
+    return this.activeChips().length > 0;
+  }
+
+  toggleSelectAll(checked: boolean): void {
+    if (checked) {
+      this.selectedInvoiceIds.set(new Set(this.invoices().map((i) => i.id)));
+    } else {
+      this.selectedInvoiceIds.set(new Set());
+    }
+  }
+
+  toggleSelectInvoice(id: string): void {
+    this.selectedInvoiceIds.update((set) => {
+      const next = new Set(set);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  isInvoiceSelected(id: string): boolean {
+    return this.selectedInvoiceIds().has(id);
+  }
+
+  isAllSelected(): boolean {
+    const list = this.invoices();
+    return list.length > 0 && list.every((i) => this.selectedInvoiceIds().has(i.id));
   }
 
   onAdd(): void {
@@ -160,24 +222,6 @@ export class InvoicesPageComponent implements OnInit {
     this.showForm.set(true);
     this.error.set(null);
     this.success.set(null);
-  }
-
-  onIssue(invoice: Invoice): void {
-    if (this.busyId()) return;
-    this.busyId.set(invoice.id);
-    this.error.set(null);
-    this.success.set(null);
-    this.invoicesService.updateInvoice(invoice.id, { status: 'ISSUED' }).subscribe({
-      next: () => {
-        this.busyId.set(null);
-        this.success.set('Invoice issued.');
-        this.refresh();
-      },
-      error: (err: HttpErrorResponse) => {
-        this.busyId.set(null);
-        this.error.set(this.friendly(err));
-      },
-    });
   }
 
   onDelete(invoice: Invoice): void {
@@ -235,17 +279,18 @@ export class InvoicesPageComponent implements OnInit {
   statusClass(status: string): string {
     switch (status) {
       case 'PAID':
-        return 'bg-green-50 text-green-700 ring-green-200';
+        return 'crm-status-pill status-green';
       case 'OVERDUE':
-        return 'bg-red-50 text-red-700 ring-red-200';
+        return 'crm-status-pill status-red';
       case 'CANCELLED':
-        return 'bg-gray-100 text-gray-600 ring-gray-200';
+        return 'crm-status-pill status-muted';
       case 'PARTIALLY_PAID':
-        return 'bg-indigo-50 text-indigo-700 ring-indigo-200';
+        return 'crm-status-pill status-amber';
       case 'ISSUED':
-        return 'bg-blue-50 text-blue-700 ring-blue-200';
+        return 'crm-status-pill status-blue';
+      case 'DRAFT':
       default:
-        return 'bg-amber-50 text-amber-700 ring-amber-200';
+        return 'crm-status-pill status-yellow';
     }
   }
 

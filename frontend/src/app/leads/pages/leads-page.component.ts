@@ -95,6 +95,56 @@ export class LeadsPageComponent implements OnInit {
     return [f.search, f.status, f.source, f.assignedTo, f.from, f.to].filter(Boolean).length;
   });
 
+  readonly showFilters = signal(false);
+  readonly selectedLeadIds = signal<Set<string>>(new Set());
+
+  readonly activeChips = computed(() => {
+    const f = this.filters();
+    const chips: { key: keyof Filters; label: string; value: string }[] = [];
+    if (f.search) chips.push({ key: 'search', label: 'Search', value: f.search });
+    if (f.status) chips.push({ key: 'status', label: 'Status', value: this.displayStatus(f.status) });
+    if (f.source) chips.push({ key: 'source', label: 'Source', value: this.displaySource(f.source) });
+    if (f.assignedTo) {
+      const u = this.assignees().find((a) => a.id === f.assignedTo);
+      chips.push({ key: 'assignedTo', label: 'Assigned', value: u?.name || f.assignedTo });
+    }
+    if (f.from) chips.push({ key: 'from', label: 'From', value: f.from });
+    if (f.to) chips.push({ key: 'to', label: 'To', value: f.to });
+    return chips;
+  });
+
+  removeFilter(key: keyof Filters): void {
+    this.filters.update((f) => ({ ...f, [key]: '' }));
+    this.page.set(1);
+    this.refresh();
+  }
+
+  toggleSelectAll(checked: boolean): void {
+    if (checked) {
+      this.selectedLeadIds.set(new Set(this.leads().map((l) => l.id)));
+    } else {
+      this.selectedLeadIds.set(new Set());
+    }
+  }
+
+  toggleSelectLead(id: string): void {
+    this.selectedLeadIds.update((set) => {
+      const next = new Set(set);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  isLeadSelected(id: string): boolean {
+    return this.selectedLeadIds().has(id);
+  }
+
+  isAllSelected(): boolean {
+    const leads = this.leads();
+    return leads.length > 0 && leads.every((l) => this.selectedLeadIds().has(l.id));
+  }
+
   ngOnInit(): void {
     this.updatePermissions();
     this.loadAssignees();
@@ -310,18 +360,18 @@ export class LeadsPageComponent implements OnInit {
   statusClass(status: string): string {
     switch (status) {
       case 'WON':
-        return 'bg-green-50 text-green-700 ring-green-200';
+        return 'crm-status-pill status-green';
       case 'LOST':
-        return 'bg-red-50 text-red-700 ring-red-200';
+        return 'crm-status-pill status-red';
       case 'QUALIFIED':
-        return 'bg-indigo-50 text-indigo-700 ring-indigo-200';
+        return 'crm-status-pill status-blue';
       case 'PROPOSAL_SENT':
-        return 'bg-sky-50 text-sky-700 ring-sky-200';
+        return 'crm-status-pill status-blue';
       case 'CONTACTED':
-        return 'bg-amber-50 text-amber-700 ring-amber-200';
+        return 'crm-status-pill status-amber';
       case 'NEW':
       default:
-        return 'bg-slate-100 text-slate-700 ring-slate-200';
+        return 'crm-status-pill status-yellow';
     }
   }
 

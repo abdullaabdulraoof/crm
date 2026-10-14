@@ -1,6 +1,6 @@
 @if (mobileOpen()) {
   <div
-    class="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm lg:hidden"
+    class="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
     (click)="closeMobile.emit()"
     aria-hidden="true"
   ></div>
@@ -8,63 +8,74 @@
 
 <aside
   id="app-sidebar"
-  class="app-sidebar fixed inset-y-0 left-0 z-50 flex h-dvh flex-col border-r border-slate-200 bg-white transition-transform duration-200 ease-in-out lg:sticky lg:top-0 lg:z-30 lg:translate-x-0 motion-reduce:transition-none"
+  class="app-sidebar fixed inset-y-0 left-0 z-50 flex h-dvh flex-col border-r border-[#24242A] bg-[#09090D] transition-all duration-200 ease-in-out lg:sticky lg:top-0 lg:z-30 lg:translate-x-0 motion-reduce:transition-none"
   [class.-translate-x-full]="!mobileOpen()"
-  [style.width]="collapsed() ? '4.5rem' : '16rem'"
+  [style.width]="collapsed() ? '4.75rem' : '15rem'"
   [style.maxWidth]="'85vw'"
   aria-label="Sidebar"
 >
-  <div class="flex h-16 items-center gap-2 border-b border-slate-100 px-4">
-    <span
-      class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-600 text-sm font-bold text-white"
+  <!-- Brand Header -->
+  <div class="flex h-16 items-center gap-3 border-b border-[#1C1C22] px-4">
+    <!-- Spiral / Swirl Modern Brand Mark matching reference -->
+    <div
+      class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#202028] to-[#121216] border border-[#2A2A33] text-[#F5F5F7] shadow-sm"
       aria-hidden="true"
     >
-      CRM
-    </span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3a9 9 0 1 0 9 9" />
+        <path d="M12 7a5 5 0 1 0 5 5" />
+        <path d="M12 10a2 2 0 1 0 2 2" />
+      </svg>
+    </div>
+
     @if (!collapsed()) {
-      <span class="flex-1 truncate text-base font-semibold text-slate-900">CRM Suite</span>
+      <div class="flex-1 min-w-0">
+        <span class="block truncate text-sm font-bold text-[#F5F5F7] tracking-tight">CRM Cloud</span>
+        <span class="block text-[10px] font-medium text-[#92929D] uppercase tracking-wider">Enterprise</span>
+      </div>
       <button
         type="button"
-        class="hidden rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 lg:inline-flex"
+        class="hidden rounded-lg p-1.5 text-[#92929D] hover:bg-[#1A1A22] hover:text-[#F5F5F7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#648BFF] lg:inline-flex"
         (click)="toggleCollapse.emit()"
         [attr.aria-label]="'Collapse sidebar'"
         aria-controls="app-sidebar"
         [attr.aria-expanded]="true"
       >
-        <app-icon name="collapse" [size]="18" />
+        <app-icon name="collapse" [size]="16" />
       </button>
     } @else {
       <span class="flex-1"></span>
       <button
         type="button"
-        class="hidden rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 lg:inline-flex"
+        class="hidden rounded-lg p-1.5 text-[#92929D] hover:bg-[#1A1A22] hover:text-[#F5F5F7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#648BFF] lg:inline-flex"
         (click)="toggleCollapse.emit()"
         aria-label="Expand sidebar"
         aria-controls="app-sidebar"
         [attr.aria-expanded]="false"
       >
-        <app-icon name="expand" [size]="18" />
+        <app-icon name="expand" [size]="16" />
       </button>
     }
     <button
       type="button"
-      class="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 lg:hidden"
+      class="rounded-lg p-1.5 text-[#92929D] hover:bg-[#1A1A22] hover:text-[#F5F5F7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#648BFF] lg:hidden"
       (click)="closeMobile.emit()"
       aria-label="Close navigation menu"
     >
-      <app-icon name="close" [size]="20" />
+      <app-icon name="close" [size]="18" />
     </button>
   </div>
 
-  <nav class="flex-1 space-y-6 overflow-y-auto px-3 py-4" aria-label="Main navigation">
+  <!-- Navigation Groups -->
+  <nav class="flex-1 space-y-5 overflow-y-auto px-3 py-4" aria-label="Main navigation">
     @for (group of groups; track group.heading) {
       <div>
         @if (!collapsed()) {
-          <p class="px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
+          <p class="px-3 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-[#6B6B78]">
             {{ group.heading }}
           </p>
         } @else {
-          <div class="mx-auto mb-2 w-6 border-t border-slate-200" aria-hidden="true"></div>
+          <div class="mx-auto mb-2 w-6 border-t border-[#1C1C22]" aria-hidden="true"></div>
         }
 
         <ul class="space-y-1">
@@ -72,14 +83,14 @@
             <li>
               <a
                 [routerLink]="item.route"
-                routerLinkActive="bg-indigo-50 text-indigo-700"
+                routerLinkActive="active-nav !bg-[#22222B] !text-[#FFFFFF] shadow-sm"
                 [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
                 (click)="closeMobile.emit()"
                 [attr.title]="collapsed() ? item.label : null"
-                class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 motion-reduce:transition-none"
+                class="group flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-semibold text-[#92929D] transition-all hover:bg-[#141419] hover:text-[#F5F5F7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#648BFF]"
                 [class.justify-center]="collapsed()"
               >
-                <app-icon [name]="item.icon" [size]="20" />
+                <app-icon [name]="item.icon" [size]="18" class="shrink-0 transition-transform group-hover:scale-105" />
                 @if (!collapsed()) {
                   <span class="truncate">{{ item.label }}</span>
                 } @else {
@@ -92,4 +103,25 @@
       </div>
     }
   </nav>
+
+  <!-- Sidebar Footer -->
+  <div class="border-t border-[#1C1C22] p-3">
+    <div
+      class="flex items-center gap-3 rounded-xl p-1.5 transition-colors"
+      [class.justify-center]="collapsed()"
+    >
+      <div
+        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#141419] border border-[#24242A] text-[#92929D]"
+        title="CRM Connected"
+      >
+        <span class="h-2 w-2 rounded-full bg-[#77DD77]"></span>
+      </div>
+      @if (!collapsed()) {
+        <div class="min-w-0 flex-1">
+          <p class="truncate text-xs font-semibold text-[#F5F5F7]">Live System</p>
+          <p class="truncate text-[10px] text-[#6B6B78]">v2.4 Dark SaaS</p>
+        </div>
+      }
+    </div>
+  </div>
 </aside>

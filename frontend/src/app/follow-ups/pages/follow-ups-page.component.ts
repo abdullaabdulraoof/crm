@@ -105,6 +105,56 @@ export class FollowUpsPageComponent implements OnInit {
   );
   readonly rangeEnd = computed(() => Math.min(this.page() * this.limit(), this.total()));
 
+  readonly showFilters = signal(false);
+  readonly selectedFollowUpIds = signal<Set<string>>(new Set());
+
+  readonly activeChips = computed(() => {
+    const f = this.filters();
+    const chips: { key: keyof Filters; label: string; value: string }[] = [];
+    if (f.search) chips.push({ key: 'search', label: 'Search', value: f.search });
+    if (f.status) chips.push({ key: 'status', label: 'Status', value: this.displayStatus(f.status) });
+    if (f.type) chips.push({ key: 'type', label: 'Type', value: this.displayType(f.type) });
+    if (f.assignedTo) {
+      const u = this.users().find((x) => x.id === f.assignedTo);
+      chips.push({ key: 'assignedTo', label: 'Assigned', value: u?.name || f.assignedTo });
+    }
+    if (f.from) chips.push({ key: 'from', label: 'From', value: f.from });
+    if (f.to) chips.push({ key: 'to', label: 'To', value: f.to });
+    return chips;
+  });
+
+  removeFilter(key: keyof Filters): void {
+    this.filters.update((f) => ({ ...f, [key]: '' }));
+    this.page.set(1);
+    this.refresh();
+  }
+
+  toggleSelectAll(checked: boolean): void {
+    if (checked) {
+      this.selectedFollowUpIds.set(new Set(this.followUps().map((f) => f.id)));
+    } else {
+      this.selectedFollowUpIds.set(new Set());
+    }
+  }
+
+  toggleSelectFollowUp(id: string): void {
+    this.selectedFollowUpIds.update((set) => {
+      const next = new Set(set);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  isFollowUpSelected(id: string): boolean {
+    return this.selectedFollowUpIds().has(id);
+  }
+
+  isAllSelected(): boolean {
+    const list = this.followUps();
+    return list.length > 0 && list.every((f) => this.selectedFollowUpIds().has(f.id));
+  }
+
   ngOnInit(): void {
     this.updatePermissions();
     this.loadUsers();
@@ -402,13 +452,13 @@ export class FollowUpsPageComponent implements OnInit {
   }
 
   statusClass(f: FollowUp): string {
-    if (this.isOverdue(f)) return 'bg-red-50 text-red-700 ring-red-200';
+    if (this.isOverdue(f)) return 'crm-status-pill status-red';
     const map: Record<string, string> = {
-      PENDING: 'bg-amber-50 text-amber-700 ring-amber-200',
-      COMPLETED: 'bg-green-50 text-green-700 ring-green-200',
-      CANCELLED: 'bg-slate-100 text-slate-600 ring-slate-200',
+      PENDING: 'crm-status-pill status-amber',
+      COMPLETED: 'crm-status-pill status-green',
+      CANCELLED: 'crm-status-pill status-muted',
     };
-    return map[f.status] || 'bg-slate-100 text-slate-600 ring-slate-200';
+    return map[f.status] || 'crm-status-pill status-muted';
   }
 
   statusDotClass(f: FollowUp): string {

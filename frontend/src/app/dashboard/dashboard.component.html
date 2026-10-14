@@ -1,189 +1,382 @@
-<div class="dashboard-shell">
-  <header class="dashboard-header">
-    <div class="min-w-0">
-      <p class="dashboard-eyebrow">CRM overview</p>
-      <h1 class="truncate text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
-        Welcome back@if (userName()) {, {{ userName() }} }
+<div class="db-shell">
+
+  <!-- ── Header matching Reference Screen 1 ─────────────────── -->
+  <header class="db-header">
+    <div class="db-header-left">
+      <h1 class="db-welcome">
+        Hello, {{ userName() || 'Team' }}! <span class="db-wave">👋</span>
       </h1>
-      <p class="mt-0.5 text-xs text-slate-500 sm:text-sm">
-        Your business at a glance
+      <p class="db-subtitle">
+        This is what's happening in your business this month
         @if (summary(); as s) {
-          <span class="text-slate-400"> · Updated {{ formatDateTime(s.generatedAt) }}</span>
+          · Updated {{ formatDateTime(s.generatedAt) }}
         }
       </p>
     </div>
 
-    <div class="dashboard-actions">
-      <a routerLink="/leads" [queryParams]="{ new: 1 }" class="dashboard-action-primary">
-        <app-icon name="plus" [size]="15" />
-        Add Lead
-      </a>
-      <a routerLink="/clients" [queryParams]="{ new: 1 }" class="dashboard-action-secondary">
-        <app-icon name="plus" [size]="15" />
-        Add Client
-      </a>
-      <a routerLink="/quotations" [queryParams]="{ new: 1 }" class="dashboard-action-secondary">
-        <app-icon name="plus" [size]="15" />
-        New Quotation
-      </a>
+    <div class="db-header-right">
+      <!-- Month pill matching reference -->
+      <div class="db-month-pill">
+        <span>This month</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </div>
+
+      <!-- Calendar icon button -->
+      <div class="db-icon-box" title="{{ currentMonthLabel() }}">
+        <app-icon name="calendar" [size]="15" />
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="db-header-actions">
+        <a routerLink="/leads" [queryParams]="{ new: 1 }" class="crm-btn-add">
+          <app-icon name="plus" [size]="14" />
+          <span>Add Lead</span>
+        </a>
+        <a routerLink="/quotations" [queryParams]="{ new: 1 }" class="db-btn-ghost">
+          <app-icon name="quotation" [size]="14" />
+          <span>New Quotation</span>
+        </a>
+      </div>
     </div>
   </header>
 
+  <!-- ── Alert State ────────────────────────────────────────── -->
   @if (error()) {
-    <div class="dashboard-alert" role="alert">
-      <span>{{ error() }}</span>
-      <button
-        type="button"
-        (click)="refresh()"
-        class="shrink-0 rounded-lg px-2 py-1 font-semibold underline underline-offset-2 hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-1"
-      >
-        Retry
-      </button>
+    <div class="db-alert" role="alert">
+      <div class="flex items-center gap-2">
+        <app-icon name="error" [size]="16" />
+        <span>{{ error() }}</span>
+      </div>
+      <button type="button" (click)="refresh()" class="db-alert-retry">Retry</button>
     </div>
   }
 
+  <!-- ── Skeleton Loading ──────────────────────────────────── -->
   @if (loading() && !summary()) {
-    <section class="dashboard-summary" aria-label="Loading key metrics">
-      @for (i of [0, 1, 2, 3]; track i) {
-        <div class="h-24 animate-pulse rounded-2xl border border-slate-200 bg-white"></div>
+    <div class="db-skeleton-grid">
+      @for (i of [0,1,2,3,4,5]; track i) {
+        <div class="db-skeleton-card"></div>
       }
-    </section>
-  } @else if (summary(); as s) {
-    <section class="dashboard-summary" aria-label="Key metrics">
-      <app-stat-card label="Total Leads" [value]="s.cards.totalLeads" icon="leads" tone="emerald" />
-      <app-stat-card label="New Leads" [value]="s.cards.newLeads" icon="leads" tone="indigo" />
-      <app-stat-card label="Total Clients" [value]="s.cards.totalClients" icon="users" tone="slate" />
-      <app-stat-card
-        label="Outstanding Payment"
-        [value]="displayAmount(s.totals.outstandingBalance)"
-        icon="payment"
-        tone="amber"
-      />
-    </section>
+    </div>
+  }
 
-    <section class="dashboard-main" aria-label="Activity and finance">
-      <app-panel title="Lead status" subtitle="Records by status">
-        <div panelAction class="dashboard-segmented" role="tablist" aria-label="Chart series">
-          @for (tab of pipelineTabs; track tab.key) {
-            <button
-              type="button"
-              role="tab"
-              [attr.aria-selected]="pipeline() === tab.key"
-              (click)="setPipeline(tab.key)"
-              class="dashboard-segment"
-              [class.dashboard-segment-active]="pipeline() === tab.key"
-            >
-              {{ tab.label }}
-            </button>
+  <!-- ── Dashboard Content ─────────────────────────────────── -->
+  @if (summary(); as s) {
+
+    <!-- ── ROW 1: 2x2 KPI Cards + Large Revenue Chart ────────── -->
+    <div class="db-grid-top">
+
+      <!-- Left: 2x2 KPI Cards -->
+      <div class="db-kpi-quad">
+
+        <!-- Card 1 (Hero Card: White/Elevated Surface from Reference) -->
+        <div class="db-card-hero">
+          <div class="db-kpi-card-header">
+            <span class="db-hero-label">Outstanding Balance</span>
+            <a routerLink="/invoices" class="db-hero-arrow-btn" aria-label="View Invoices">
+              <app-icon name="arrow-up-right" [size]="14" />
+            </a>
+          </div>
+          <div class="db-hero-value-wrap">
+            <div class="db-hero-amount">$ {{ displayAmount(s.totals.outstandingBalance) }}</div>
+            <div class="db-badge-pill-green">
+              <span>●</span>
+              <span>Active</span>
+            </div>
+          </div>
+          <div class="db-hero-sub">Total receivables due</div>
+        </div>
+
+        <!-- Card 2: Total Leads -->
+        <div class="db-card-metric">
+          <div class="db-kpi-card-header">
+            <span class="db-metric-label">Total Leads</span>
+            <a routerLink="/leads" class="crm-icon-arrow-btn" aria-label="View Leads">
+              <app-icon name="arrow-up-right" [size]="14" />
+            </a>
+          </div>
+          <div class="db-metric-value-wrap">
+            <div class="db-metric-amount">{{ s.cards.totalLeads }}</div>
+            <div class="db-badge-pill-blue">
+              <span>+{{ s.cards.newLeads }} new</span>
+            </div>
+          </div>
+          <div class="db-metric-sub">Pipeline prospects</div>
+        </div>
+
+        <!-- Card 3: Total Clients -->
+        <div class="db-card-metric">
+          <div class="db-kpi-card-header">
+            <span class="db-metric-label">Total Clients</span>
+            <a routerLink="/clients" class="crm-icon-arrow-btn" aria-label="View Clients">
+              <app-icon name="arrow-up-right" [size]="14" />
+            </a>
+          </div>
+          <div class="db-metric-value-wrap">
+            <div class="db-metric-amount">{{ s.cards.totalClients }}</div>
+            <div class="db-badge-pill-amber">
+              <span>Active accounts</span>
+            </div>
+          </div>
+          <div class="db-metric-sub">Verified customer directory</div>
+        </div>
+
+        <!-- Card 4: Payments Received -->
+        <div class="db-card-metric">
+          <div class="db-kpi-card-header">
+            <span class="db-metric-label">Payments Received</span>
+            <a routerLink="/payments" class="crm-icon-arrow-btn" aria-label="View Payments">
+              <app-icon name="arrow-up-right" [size]="14" />
+            </a>
+          </div>
+          <div class="db-metric-value-wrap">
+            <div class="db-metric-amount">$ {{ displayAmount(s.cards.paymentsThisMonth) }}</div>
+            <div class="db-badge-pill-green">
+              <span>This month</span>
+            </div>
+          </div>
+          <div class="db-metric-sub">Recorded collections</div>
+        </div>
+
+      </div>
+
+      <!-- Right: Main Revenue / Pipeline Bar Chart -->
+      <div class="db-card db-chart-card">
+        <div class="db-card-header">
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="db-card-title">Revenue & Activity</h2>
+              <span class="db-card-subtitle-badge">This month vs last</span>
+            </div>
+            <p class="db-card-sub">Real-time CRM pipeline distribution</p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <!-- Pipeline tab selector -->
+            <div class="db-toggle-group" role="tablist">
+              @for (tab of pipelineTabs; track tab.key) {
+                <button
+                  type="button"
+                  role="tab"
+                  [attr.aria-selected]="pipeline() === tab.key"
+                  (click)="setPipeline(tab.key)"
+                  class="db-toggle-btn"
+                  [class.db-toggle-active]="pipeline() === tab.key"
+                >{{ tab.label }}</button>
+              }
+            </div>
+
+            <a routerLink="/reports" class="crm-icon-arrow-btn" aria-label="View Reports">
+              <app-icon name="arrow-up-right" [size]="14" />
+            </a>
+          </div>
+        </div>
+
+        <!-- Vertical Bar Chart matching reference blue bars -->
+        <div class="db-vchart-area">
+          @if (pipelineBars().length) {
+            <!-- Y-Axis Ticks -->
+            <div class="db-vchart-yaxis">
+              @for (tick of chartYTicks(); track tick) {
+                <span>{{ tick }}</span>
+              }
+            </div>
+
+            <!-- Bars Container -->
+            <div class="db-vchart-bars-wrap">
+              @for (bar of pipelineBars(); track bar.key; let i = $index) {
+                <div class="db-vchart-col">
+                  <div class="db-vchart-bar-container">
+                    @if (isTopBar(bar)) {
+                      <div class="db-vchart-tooltip">
+                        <span>{{ bar.value }}</span>
+                      </div>
+                    }
+                    <div
+                      class="db-vchart-bar"
+                      [class.db-vchart-bar-highlight]="isTopBar(bar)"
+                      [style.height]="bar.width"
+                    ></div>
+                  </div>
+                  <span class="db-vchart-axis-label" [title]="bar.label">
+                    {{ bar.label | slice:0:4 | uppercase }}
+                  </span>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="db-empty-state">No activity recorded for this view.</div>
           }
         </div>
+      </div>
 
-        @if (pipelineBars().length) {
-          <app-bar-list [bars]="pipelineBars()" [tone]="pipelineTone()" />
-        } @else {
-          <app-empty-state message="No data recorded yet." />
-        }
-      </app-panel>
+    </div>
 
-      <app-panel title="Financial summary" subtitle="Current month">
-        <dl class="dashboard-finance">
-          <div class="dashboard-finance-item">
-            <dt>Outstanding balance</dt>
-            <dd class="dashboard-finance-emphasis">
-              {{ displayAmount(s.totals.outstandingBalance) }}
-            </dd>
-          </div>
-          <div class="dashboard-finance-item">
-            <dt>Payments this month</dt>
-            <dd>{{ displayAmount(s.cards.paymentsThisMonth) }}</dd>
-          </div>
-          <div class="dashboard-finance-item">
-            <dt>Overdue invoices</dt>
-            <dd [class.dashboard-finance-danger]="s.cards.overdueInvoices > 0">
-              {{ s.cards.overdueInvoices }}
-              <span class="dashboard-finance-note">
-                · {{ displayAmount(s.totals.overdueBalance) }} due
-              </span>
-            </dd>
-          </div>
-          <div class="dashboard-finance-item">
-            <dt>Invoiced this month</dt>
-            <dd>{{ displayAmount(s.totals.invoicedThisMonth) }}</dd>
-          </div>
-        </dl>
+    <!-- ── ROW 2: 3 Cards matching Reference Screen 1 Bottom ─── -->
+    <div class="db-grid-mid">
 
-        <div class="dashboard-links">
-          <a routerLink="/invoices">
-            Invoices <app-icon name="arrow-right" [size]="13" />
-          </a>
-          <a routerLink="/payments">
-            Payments <app-icon name="arrow-right" [size]="13" />
+      <!-- Card 1: Orders / Quotations Summary -->
+      <div class="db-card db-card-summary">
+        <div class="flex items-center justify-between">
+          <div class="db-summary-icon-circle bg-[#24242E] text-[#648BFF]">
+            <app-icon name="quotation" [size]="18" />
+          </div>
+          <a routerLink="/quotations" class="crm-icon-arrow-btn" aria-label="View Quotations">
+            <app-icon name="arrow-up-right" [size]="14" />
           </a>
         </div>
-      </app-panel>
+        <div class="mt-4">
+          <div class="flex items-baseline gap-2">
+            <span class="text-3xl font-extrabold text-[#F5F5F7] tracking-tight">
+              {{ s.cards.quotationsSent }}
+            </span>
+            <span class="text-sm font-semibold text-[#92929D]">quotations</span>
+          </div>
+          <p class="mt-1 text-xs text-[#92929D]">
+            <span class="text-[#FFA07A] font-medium">{{ s.cards.newLeads }} leads</span> are awaiting qualification.
+          </p>
+        </div>
+      </div>
 
-      <app-panel title="Upcoming follow-ups" subtitle="Nearest due first">
-        @if (s.recent.followUps.length) {
-          <ul class="dashboard-followups">
-            @for (followUp of s.recent.followUps.slice(0, 3); track trackById($index, followUp)) {
-              <li>
-                <div class="min-w-0">
-                  <p class="truncate text-xs font-semibold text-slate-800 sm:text-sm">
-                    {{ followUp.subject }}
-                  </p>
-                  <p class="truncate text-[11px] text-slate-500">
-                    {{ followUp.client?.name || followUp.lead?.name || '-' }}
-                  </p>
-                </div>
-                <span
-                  class="dashboard-due"
-                  [class]="
-                    isOverdue(followUp.dueAt)
-                      ? 'bg-rose-50 text-rose-700 ring-rose-200'
-                      : 'bg-slate-50 text-slate-500 ring-slate-200'
-                  "
-                >
-                  {{ isOverdue(followUp.dueAt) ? 'Overdue · ' : '' }}{{ formatDate(followUp.dueAt) }}
-                </span>
-              </li>
+      <!-- Card 2: Customers / Clients Summary -->
+      <div class="db-card db-card-summary">
+        <div class="flex items-center justify-between">
+          <div class="db-summary-icon-circle bg-[#24242E] text-[#77DD77]">
+            <app-icon name="users" [size]="18" />
+          </div>
+          <a routerLink="/clients" class="crm-icon-arrow-btn" aria-label="View Clients">
+            <app-icon name="arrow-up-right" [size]="14" />
+          </a>
+        </div>
+        <div class="mt-4">
+          <div class="flex items-baseline gap-2">
+            <span class="text-3xl font-extrabold text-[#F5F5F7] tracking-tight">
+              {{ s.cards.totalClients }}
+            </span>
+            <span class="text-sm font-semibold text-[#92929D]">clients</span>
+          </div>
+          <p class="mt-1 text-xs text-[#92929D]">
+            <span class="text-[#648BFF] font-medium">{{ s.recent.followUps.length }} follow-ups</span> scheduled soon.
+          </p>
+        </div>
+      </div>
+
+      <!-- Card 3: Donut Chart "Sales by Category / Status" -->
+      <div class="db-card db-donut-card">
+        <div class="flex items-center justify-between mb-2">
+          <div>
+            <h3 class="text-xs font-bold text-[#F5F5F7] uppercase tracking-wider">Pipeline by Status</h3>
+            <p class="text-[10px] text-[#92929D]">Distribution of records</p>
+          </div>
+          <a routerLink="/reports" class="crm-icon-arrow-btn" aria-label="View Status Distribution">
+            <app-icon name="arrow-up-right" [size]="14" />
+          </a>
+        </div>
+
+        <div class="db-donut-layout">
+          <!-- Donut SVG -->
+          <div class="db-donut-svg-wrap">
+            <svg class="db-donut-svg" viewBox="0 0 100 100">
+              <!-- Background circle -->
+              <circle
+                cx="50"
+                cy="50"
+                r="40"
+                fill="none"
+                stroke="#24242C"
+                stroke-width="12"
+              />
+              <!-- Donut Segments -->
+              @for (slice of donutSlices(); track slice.key) {
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  fill="none"
+                  [attr.stroke]="slice.color"
+                  stroke-width="12"
+                  [attr.stroke-dasharray]="slice.dashArray"
+                  [attr.stroke-dashoffset]="slice.dashOffset"
+                  stroke-linecap="butt"
+                  transform="rotate(-90 50 50)"
+                  class="transition-all duration-500"
+                />
+              }
+            </svg>
+            <div class="db-donut-center-text">
+              <span class="text-base font-extrabold text-[#F5F5F7] leading-none">{{ donutTotal() }}</span>
+              <span class="text-[9px] uppercase tracking-wider text-[#92929D] mt-0.5">Total</span>
+            </div>
+          </div>
+
+          <!-- Donut Legend with colorful dots matching reference -->
+          <div class="db-donut-legend">
+            @for (slice of donutSlices(); track slice.key) {
+              <div class="db-legend-item">
+                <span class="db-legend-dot" [style.backgroundColor]="slice.color"></span>
+                <span class="db-legend-label truncate" [title]="slice.label">{{ slice.label }}</span>
+                <span class="db-legend-pct">{{ slice.percent }}%</span>
+              </div>
             }
-          </ul>
-        } @else {
-          <app-empty-state message="No pending follow-ups." icon="follow-up" />
-        }
-      </app-panel>
-    </section>
+          </div>
+        </div>
+      </div>
 
-    <section class="dashboard-recent" aria-label="Recent quotations">
-      <app-panel title="Recent quotations" subtitle="Newest first">
-        <a panelAction routerLink="/quotations" class="dashboard-viewall">
-          View all <app-icon name="arrow-right" [size]="13" />
-        </a>
+    </div>
+
+    <!-- ── ROW 3: Recent Transactions + Upcoming Follow-ups ──── -->
+    <div class="db-grid-bottom">
+
+      <!-- Recent Quotations Data Table Card -->
+      <div class="db-card db-history-card">
+        <div class="db-card-header">
+          <div>
+            <h2 class="db-card-title">Recent Quotations</h2>
+            <p class="db-card-sub">Latest commercial proposals</p>
+          </div>
+          <a routerLink="/quotations" class="db-viewall-link">
+            <span>View all</span>
+            <app-icon name="arrow-right" [size]="14" />
+          </a>
+        </div>
 
         @if (s.recent.quotations.length) {
-          <div class="dashboard-table-wrap">
-            <table class="dashboard-table">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left">
               <thead>
-                <tr>
-                  <th scope="col">Quotation</th>
-                  <th scope="col">Customer</th>
-                  <th scope="col">Status</th>
-                  <th scope="col" class="dashboard-col-date">Date</th>
-                  <th scope="col" class="dashboard-col-amount">Amount</th>
+                <tr class="bg-[#242428] text-[10px] font-bold uppercase tracking-wider text-[#92929D]">
+                  <th class="px-4 py-2.5">Quotation / Customer</th>
+                  <th class="px-4 py-2.5">Date</th>
+                  <th class="px-4 py-2.5">Status</th>
+                  <th class="px-4 py-2.5 text-right">Amount</th>
                 </tr>
               </thead>
-              <tbody>
-                @for (
-                  quotation of s.recent.quotations.slice(0, 4);
-                  track trackById($index, quotation)
-                ) {
-                  <tr>
-                    <td class="dashboard-cell-strong">{{ quotation.quotationNumber }}</td>
-                    <td class="truncate">{{ customerName(quotation) }}</td>
-                    <td><app-status-badge [status]="quotation.status" /></td>
-                    <td class="dashboard-col-date">{{ formatDate(quotation.createdAt) }}</td>
-                    <td class="dashboard-col-amount">
-                      {{ displayAmount(quotation.totalAmount) }}
+              <tbody class="divide-y divide-[#202026]">
+                @for (q of s.recent.quotations.slice(0, 5); track trackById($index, q)) {
+                  <tr class="hover:bg-[#222228] transition-colors">
+                    <td class="px-4 py-3">
+                      <div class="flex items-center gap-3">
+                        <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#24242E] text-xs font-bold text-[#648BFF]">
+                          {{ customerName(q)[0] }}
+                        </div>
+                        <div class="min-w-0">
+                          <p class="truncate text-xs font-semibold text-[#F5F5F7]">{{ customerName(q) }}</p>
+                          <p class="truncate text-[10px] text-[#92929D]">{{ q.quotationNumber }}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-4 py-3 text-xs text-[#92929D] whitespace-nowrap">
+                      {{ formatDate(q.createdAt) }}
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                      <span [class]="statusPillClass(q.status)">
+                        {{ q.status | titlecase }}
+                      </span>
+                    </td>
+                    <td class="px-4 py-3 text-right text-xs font-bold text-[#F5F5F7] whitespace-nowrap">
+                      $ {{ displayAmount(q.totalAmount) }}
                     </td>
                   </tr>
                 }
@@ -191,9 +384,49 @@
             </table>
           </div>
         } @else {
-          <app-empty-state message="No quotations yet." icon="quotation" />
+          <div class="db-empty-state">No quotations recorded yet.</div>
         }
-      </app-panel>
-    </section>
+      </div>
+
+      <!-- Upcoming Follow-ups Card -->
+      <div class="db-card db-followups-card">
+        <div class="db-card-header">
+          <div>
+            <h2 class="db-card-title">Upcoming Follow-ups</h2>
+            <p class="db-card-sub">Next scheduled actions</p>
+          </div>
+          <a routerLink="/follow-ups" class="db-viewall-link">
+            <span>View all</span>
+            <app-icon name="arrow-right" [size]="14" />
+          </a>
+        </div>
+
+        @if (s.recent.followUps.length) {
+          <div class="db-followup-list">
+            @for (f of s.recent.followUps.slice(0, 5); track f.id) {
+              <div class="db-followup-item">
+                <div class="db-followup-avatar">
+                  {{ (f.client?.name || f.lead?.name || '?')[0] }}
+                </div>
+                <div class="db-followup-info">
+                  <p class="db-followup-name">{{ f.subject }}</p>
+                  <p class="db-followup-meta">{{ f.client?.name || f.lead?.name || '—' }}</p>
+                </div>
+                <span
+                  class="db-followup-badge"
+                  [class.is-overdue]="isOverdue(f.dueAt)"
+                >
+                  {{ formatDate(f.dueAt) }}
+                </span>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="db-empty-state">No pending follow-ups scheduled.</div>
+        }
+      </div>
+
+    </div>
+
   }
 </div>
